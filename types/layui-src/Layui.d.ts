@@ -39,22 +39,62 @@ interface Layui {
 
     // https://www.layui.com/doc/base/infrastructure.html
     /**
-     * 对象是否为泛数组结构，实例：	<br/>&nbsp;
-     *   layui._isArray([1,6]); true	<br/>&nbsp;
-     *   layui._isArray($('div')); true	<br/>&nbsp;
-     *   layui._isArray(document.querySelectorAll('div')); true
+     * 对象是否为泛数组结构，实例：
+     * ```
+     * layui._isArray([1,6]); // true	
+     * layui._isArray($('div')); // true
+     * layui._isArray(document.querySelectorAll('div')); // true
+     * ```
      * @param [obj] 如 Array、NodeList、jQuery 对象等等。
+     * @deprecated 已废弃，请使用 {@link Layui.isArray | isArray} 替代
+     * @see {@link Layui.isArray | isArray}
+     * @since 2.6.8
      */
     _isArray(obj: any): boolean;
+
+    /**
+     *对象是否为泛数组结构，实例：
+     * ```
+     * layui.isArray([1,6]); // true	
+     * layui.isArray($('div')); // true
+     * layui.isArray(document.querySelectorAll('div')); // true
+     * ```
+     * @param [obj] 如 Array、NodeList、jQuery 对象等等。
+     * @since 2.6.9
+     */
+    isArray(obj: any): boolean;
 
     // https://www.layui.com/doc/base/infrastructure.html
     /**
      * 获取详细数据类型（基本数据类型和各类常见引用类型）	<br/>&nbsp;
-     *  常见类型字符:Function|Array|Date|RegExp|Object|Error|Symbol	<br/>&nbsp;
-     *  实例：layui._typeof([]); //array layui._typeof({}); //object layui._typeof(new Date()); //date等等。
+     *  常见类型字符: Function | Array | Date | RegExp | Object | Error | Symbol	<br/>&nbsp;
+     *  实例:
+     * ```
+     * layui._typeof([]); // array 
+     * layui._typeof({}); // object 
+     * layui._typeof(new Date()); // date
+     * ```
      * @param [operand]  参数
+     * @deprecated 已废弃，请使用 {@link Layui.typeof | typeof} 替代
+     * @see {@link Layui.typeof | typeof}
+     * @since 2.6.8
      */
     _typeof(operand: any): string;
+
+    // https://www.layui.com/doc/base/infrastructure.html
+    /**
+     * 获取详细数据类型（基本数据类型和各类常见引用类型）	<br/>&nbsp;
+     *  常见类型字符: Function | Array | Date | RegExp | Object | Error | Symbol	<br/>&nbsp;
+     *  实例:
+     * ```
+     * layui.typeof([]); // array 
+     * layui.typeof({}); // object 
+     * layui.typeof(new Date()); // date
+     * ```
+     * @param [operand]  参数
+     * @since 2.6.9
+     */
+     typeof(operand: any): string;
 
     /**
      * 动态加载 CSS文件（相对路径）
@@ -175,15 +215,21 @@ interface Layui {
     // https://www.layui.com/doc/base/infrastructure.html
     /**
      * 执行自定义模块事件，搭配 onevent 使用,参数说明：<br/>&nbsp;
-     *  实例一：按照select后边括号内容filter来匹配，比如filter空或没有括号则可匹配到<br/>&nbsp;
-     *      layui.onevent("form", "select()", console.log);<br/>&nbsp;
-     *      layui.event("form","select()",[1,2,3]);<br/>&nbsp;
-     *  实例二：{*}可匹配全部filter<br/>&nbsp;
-     *      layui.onevent("form", "select(xx)", console.log);<br/>&nbsp;
-     *      layui.event("form","select({*})",[1,2,3]);<br/>&nbsp;
-     *  实例三：filter严格匹配<br/>&nbsp;
-     *      layui.onevent("form", "select(xx)", console.log);<br/>&nbsp;
-     *      layui.event("form","select(xx)",[1,2,3]);
+     * - 实例一：按照select后边括号内容filter来匹配，比如filter空或没有括号则可匹配到
+     * ```
+     *   layui.onevent("form", "select()", console.log);
+     *   layui.event("form","select()",[1,2,3]);
+     * ```
+     * - 实例二：{*}可匹配全部filter
+     * ```
+     *   layui.onevent("form", "select(xx)", console.log)
+     *   layui.event("form","select({*})",[1,2,3]);
+     * ```
+     * - 实例三：filter严格匹配
+     * ```
+     *   layui.onevent("form", "select(xx)", console.log);
+     *   layui.event("form","select(xx)",[1,2,3]);
+     * ```
      * @param [modName]  模块名称，比如form，<br/>&nbsp;
      * @param [events]  事件，比如：select(filter)<br/>&nbsp;
      * @param [params] 回调参数，作为绑定的回调函数的参数<br/>&nbsp;
@@ -371,6 +417,14 @@ interface Layui {
      * @param [exports]  无任何用途，可不传
      */
     use(callback: (this: Layui, module: { config: object; time: number }) => any, exports?: any[]): { v: string };
+
+    /**
+     * 弃用某模块，以便重新扩展新的同名模块
+     * @param modules 模块名称，支持数组，可同时弃用多个模块
+     * @example layui.disuse('table')
+     * @since 2.7.0
+     */
+    disuse(modules: keyof Layui.LayuiModuleMap | Array<keyof Layui.LayuiModuleMap> ): any;
 
     /**
      * 代码高亮

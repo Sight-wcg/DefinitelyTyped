@@ -82,18 +82,20 @@ declare namespace Layui {
         full?: boolean;
         /**
          * 轮播切换动画方式
+         * - `default` 左右切换
+         * - `updown` 上下切换
+         * - `fade` 渐隐渐显切换
          * @default 'default'
-         * @example
-         * anim: 'default' //（左右切换）
-         * anim: 'updown'  //（上下切换）
-         * anim: 'fade'    //（渐隐渐显切换）
          */
         anim?: 'default' | 'updown' | 'fade';
         /**
          * 是否自动切换
+         * - `true` 自动滚动，鼠标移入会暂停、移出重新恢复
+         * - `false` 不自动滚动
+         * - `alway` 始终自动滚动，不受鼠标移入移出影响（2.7.0）
          * @default true
          */
-        autoplay?: boolean;
+        autoplay?: boolean | 'always';
         /**
          * 自动切换的时间间隔，单位：ms（毫秒），不能低于800
          * @default 3000
@@ -127,6 +129,12 @@ declare namespace Layui {
          * @default 'click'
          */
         trigger?: string;
+        /**
+         * 轮播切换后的回调函数
+         * @param [obj] 轮播条目对象
+         * @since 2.7.0
+         */
+        change?:(obj?: CarouselItem) => any
     }
 
     interface CarouselItem {
@@ -250,9 +258,15 @@ declare namespace Layui {
      */
     interface CodeOption {
         /**
-         * 指定元素的选择器 默认值为.layui-code
+         * 指定元素的选择器 默认值为 `.layui-code`
          */
         elem?: string;
+        /**
+         * 是否显示行号
+         * @default true
+         * @since 2.7.3
+         */
+        ln?: boolean;
         /**
          * 设定标题 默认值为code
          */
@@ -266,11 +280,11 @@ declare namespace Layui {
          */
         encode?: boolean;
         /**
-         * 风格选择（目前内置了两种:默认和notepad）
+         * 风格选择，默认可不填（浅色模式），若为深色模式，填写：skin:'dark'
          */
         skin?: string;
         /**
-         * 是否剔除右上关于
+         * 自定义右上角内容，可传入任意 html
          */
         about?: boolean;
     }
@@ -737,6 +751,37 @@ declare namespace Layui {
         render(type?: 'select' | 'checkbox' | 'radio' | null, filter?: string): Form;
 
         /**
+         * 允许指定表单元素的 jQuery 对象，从而完成定向渲染。且支持两种方式的指向：
+         * - 若 jQuery 对象指向表单域容器（class="layui-form"），则渲染该表单域中的所有表单项(2.8)
+         * - 若 jQuery 对象指向的不是表单域容器，则只对该对象进行渲染
+         * @example
+         * ```
+         * // 定向渲染（一般当表单存在动态生成时，进行渲染）
+         * // 传入需要渲染的相应表单元素的 jQuery 对象 
+         * form.render($('#form-id')); // 渲染 id="form-id" 的表单域中的所有表单项
+         * form.render($('#select-id')); // 仅渲染 id="select-id" 的表单项
+         * ```
+         * @param [obj] 表单元素的 jQuery 对象
+         * @since 2.7.0
+         */
+        render(obj?: JQuery): Form;
+
+        /**
+         * 提交方法，可以实现在任意位置对指定表单的主动提交
+         * @param filter 表单域容器的 lay-filter 属性值
+         * @param [callback] 执行提交事件后的回调函数
+         * @since 2.7.0
+         */
+        submit(filter: string, callback?: (data: LayFormData) => any): any;
+
+        /**
+         * 触发指定表单项的验证。验证通过，返回 true，否则返回 false
+         * @param elem 元素选择器或 jQuery 对象
+         * @since 2.7.0
+         */
+        validate(elem: string | Jquery): boolean;
+
+        /**
          * 表单赋值 / 取值
          * @param [filter]  .layui-form 上的lay-filter=""值
          * @param [obj] 要设置的值
@@ -954,12 +999,12 @@ declare namespace Layui {
         hasScrollbar(): boolean;
 
         /**
-         * unknown
-         * @param [elem] HTMLElement
-         * @param [elemView]
-         * @param [obj]
+         * 将元素定位到指定目标元素附近
+         * @param elem 目标元素
+         * @param elemView 定位元素
+         * @param [obj] 
          */
-        position(elem: HTMLElement, elemView: any, obj?: any): any;
+        position(elem: HTMLElement, elemView: HTMLElement, obj?: {position?: 'fixed', clickType?: 'right', align?: 'center' | 'right', SYSTEM_RELOAD?: boolean}): void;
 
         /**
          * 获取元素上的参数，同jquery.attr()
@@ -1015,6 +1060,20 @@ declare namespace Layui {
 
         format?: string;
         /**
+         * 标注节假日及补班日，值是一个二维数组
+         * @example
+         * ```
+         * holidays: [
+         *  // 2023 年的节假日
+         *  ['2023-1-1','2023-1-2','2023-1-3'],
+         *  // 2023 年的补班日
+         *  ['2023-1-28','2023-1-29']
+         * ]
+         * ```
+         * @since 2.7.3
+         */
+        holidays?: string[][];
+        /**
          * 初始值  ""|new Date()|20180115
          */
         value?: string | Date | number;
@@ -1025,6 +1084,12 @@ declare namespace Layui {
          *   用于控制是否自动向元素填充初始值（需配合 value 参数使用）
          */
         isInitValue?: boolean;
+        /**
+         * 设置起始周。 支持 0-6 的数字，0 即代表从周日开始
+         * @default 0
+         * @since 2.7.0
+         */
+        weekStart?: 0 | 1 | 2 | 3 | 4 | 5 | 6
         /**
          * 是否开启选择值预览    <br/>&nbsp;
          *   用于控制是否显示当前结果的预览（type 为 datetime 时不开启）
@@ -1114,6 +1179,12 @@ declare namespace Layui {
          * @param [endDate] 开启范围选择（range: true）才会返回。对象成员同上date
          */
         done?(value: string, date: DateParam, endDate: DateParam): void;
+        /**
+         * 组件面板被完全关闭（移除）后触发的回调
+         * @param [this] 组件实例
+         * @since 2.7.4
+         */
+        close(this: any): void;
     }
 
     /**
@@ -1140,6 +1211,13 @@ declare namespace Layui {
          */
 
         path: string;
+
+        /**
+         * 关闭日期面板
+         * @param [id] 组件渲染时定义的 id 属性值。 若 id 参数不填，则关闭当前打开的日期面板
+         * @since 2.7.5
+         */
+        close(id?: string): Laydate;
 
         /**
          * 获取指定年月的最后一天
@@ -1519,13 +1597,15 @@ declare namespace Layui {
 
     /**
      * 配置layer层的基础参数
-     * @example ```javascript
+     * @example 
+     * ```javascript
      * layui.layer.config({
      *    anim: 1, // 默认动画风格
      *    skin: 'layui-layer-molv', // 默认皮肤
      *    extend: 'myskin/style.css', // 样式位置
      *    //...
      * });
+     * ```
      */
     interface LayerConfigOptions extends LayerOptions {
         /**
@@ -2291,9 +2371,18 @@ declare namespace Layui {
          */
         unresize?: boolean;
         /**
-         * 单元格编辑类型（默认不开启）目前只支持：text（输入框）
+         * 是否对当前列进行内容编码（转义 html），优先级大于基础属性中的 {@link TableOption.escape | escape}
+         * @default true
+         * @since 2.7.5
          */
-        edit?: 'text' | string;
+        escape?: boolean;
+        /**
+         * 单元格编辑类型（默认不开启）目前只支持：text（输入框）
+         * - edit: `text` 单行输入模式
+         * - edit: `textarea` 多行输入模式（2.7.0）
+         * - edit: () => 'text' （2.7.5）
+         */
+        edit?: 'text' | 'textarea' | string | boolean | ((d?: TableColumnOptionForTemplet) => ('text' | 'textarea'));
         /**
          * 自定义单元格点击事件名，以便在 tool 事件中完成对该单元格的业务处理，    <br/>&nbsp;
          *   比如：table.on('tool(tableFilter)', function(obj){obj.event=''})
@@ -2320,7 +2409,21 @@ declare namespace Layui {
          *   回调参数d从v2.6.8新增 LAY_COL 字段，可得到当前列的表头配置信息
          *   laytpl:https://www.layui.com/doc/modules/laytpl.html
          */
-        templet?: string | ((d: TableColumnOptionForTemplet) => string);
+        templet?: string | ((d?: TableColumnOptionForTemplet) => string);
+        /**
+         * 用于表格导出时的内容输出，当 `templet` 较复杂时建议使用，将优先以对应表头的 `exportTemplet` 的返回内容为导出结果
+         * @example
+         * ```
+         * exportTemplet: function(d, obj){
+         *   // 当前 td
+         *   var td = obj.td(this.field);
+         *   // 返回 select 选中值
+         *   return td.find('select').val();
+         * }
+         * ```
+         * @since 2.6.9
+         */
+        exportTemplate?: string | ((d?: TableColumnOptionForTemplet, obj?: {td?: (field: TableColumnOption['field']) => JQuery}) => string);
         /**
          * 绑定工具条模板。可在每行对应的列中出现一些自定义的操作性按钮    <br/>&nbsp;
          *  dom选择器，例如#toolbar
@@ -2336,6 +2439,10 @@ declare namespace Layui {
         LAY_COL: TableColumnOptionForTempletCol;
         LAY_INDEX: number;
         LAY_TABLE_INDEX: number;
+        /**
+         * @since 2.7.1
+         */
+        LAY_DISABLED: boolean;
         /**
          * 该属性不存在，只是提示你：你可以用d.xxx 使用当前行中的任意数据属性。
          */
@@ -2419,6 +2526,11 @@ declare namespace Layui {
 
         reload(options: TableOption, deep?: boolean): void;
 
+        /**
+         * @since 2.7.0
+         */
+        reloadData(options: TableOption, deep?: boolean): void;
+
         setColsWidth(): void;
 
         resize(): void;
@@ -2434,16 +2546,43 @@ declare namespace Layui {
          */
         elem?: string | HTMLElement | JQuery;
         /**
+         * 单元格编辑的事件触发方式
+         * @since 2.7.0
+         */
+        editTrigger?: 'click' | 'dbclick';
+        /**
          * 设置表头。值是一个二维数组。方法渲染方式必填 ,1维是表头集合，二维是列集合    <br/>&nbsp;
          * https://www.layui.com/doc/modules/table.html#cols
          */
         cols?: TableColumnOption[][];
+        /**
+         * 定义表格行样式，如每行的高度等各种样式
+         * @example lineStyle: 'height: 95px;'
+         * @since 2.7.0
+         */
+        lineStyle?: string;
+        /**
+         * 表格主容器追加 css 类名，以便更好地扩展表格样式
+         * @since 2.7.0
+         */
+        className?: string;
+        /**
+         * 给当前表格主容器直接设定 css 样式，样式值只会对所在容器有效，不会影响其他表格实例
+         * @example css: '.layui-table-page{text-align: right;}'
+         * @since 2.7.0
+         */
+        css?: string;
         /**
          * 接口地址    <br/>&nbsp;
          *   默认会自动传递两个参数：?page=1&limit=30（该参数可通过 request 自定义）    <br/>&nbsp;
          *    page 代表当前页码、limit 代表每页数据量
          */
         url?: string | null;
+        /**
+         * 开启分页区域的自定义模板，用法同 toolbar 属性
+         * @since 2.7.0
+         */
+        pagebar?: string;
         /**
          * 开启表格头部工具栏区域，该参数支持四种类型值：   <br>&nbsp;
          *  toolbar: '#toolbarDemo' // 指向自定义工具栏模板选择器  <br>&nbsp;
@@ -2473,6 +2612,21 @@ declare namespace Layui {
          * 全局定义所有常规单元格的最小宽度（默认：60）
          */
         cellMinWidth?: number;
+        /**
+         * 设置重载数据或切换分页时的滚动条位置状态
+         * - `fixed` 重载数据时，保持滚动条位置不变
+         * - `reset` 重载数据时，滚动条位置恢复置顶
+         * - `default`  默认方式，无需设置。即重载数据或切换分页时，纵向滚动条置顶，横向滚动条位置不变
+         * @since 2.7.3
+         */
+        scrollPos?: 'fixed' | 'reset ' | 'default ';
+
+        /**
+         * 数据渲染之前的回调函数
+         * @param options 各项基础参数
+         * @since 2.7.3
+         */
+        before?(options?: TableOption): void;
 
         /**
          * 数据渲染完的回调。你可以借此做一些其它的操作
@@ -2495,7 +2649,7 @@ declare namespace Layui {
          */
         data?: any[];
         /**
-         * 是否开启 xss 字符过滤（默认 false）
+         * 是否开启 xss 字符过滤（默认 true，2.6.11 之前默认为 false）
          */
         escape?: boolean;
         /**
@@ -2569,6 +2723,16 @@ declare namespace Layui {
          */
         contentType?: string;
         /**
+         * 请求的数据类型，默认 json
+         * @since 2.7.3
+         */
+        dataType?: string;
+        /**
+         * 设置当 `dataType: 'jsonp'` 时的回调函数名
+         * @since 2.7.3
+         */
+        jsonpCallback?: string; 
+        /**
          * 接口的请求头。如：headers: {token: 'sasasas'}
          */
         headers?: object;
@@ -2603,8 +2767,21 @@ declare namespace Layui {
 
         tr: JQuery;
         type: string;
+        /**
+         * 
+         * @param fields 要更新的列字段对象
+         * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
+         */
+        update(fields: object, related?: boolean): void;
+    }
 
-        update(fields: object): void;
+    /**
+     * 点击尾部分页栏自定义模板后回调参数的类型
+     * @since 2.7.0
+     */
+    interface TableOnPagebar {
+        config: TableOption;
+        event: string;
     }
 
     /**
@@ -2625,8 +2802,31 @@ declare namespace Layui {
 
         event: string;
         tr: JQuery;
+        /**
+         * 
+         * @param fields 要更新的列字段对象
+         * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
+         */
+        update(fields: object, related?: boolean): void;
+    }
 
-        update(fields: object): void;
+    /**
+     * 双击table中工具列后回调参数的类型
+     * @since 2.7.0
+     */
+    interface TableOnToolDouble {
+        data: object;
+
+        del(): void;
+
+        event: string;
+        tr: JQuery;
+        /**
+         * 
+         * @param fields 要更新的列字段对象
+         * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
+         */
+        update(fields: object, related?: boolean): void;
     }
 
     /**
@@ -2638,8 +2838,12 @@ declare namespace Layui {
         del(): void;
 
         tr: JQuery;
-
-        update(fields: object): void;
+        /**
+         * 
+         * @param fields 要更新的列字段对象
+         * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
+         */
+        update(fields: object, related?: boolean): void;
     }
 
     /**
@@ -2653,7 +2857,12 @@ declare namespace Layui {
         field: string;
         tr: JQuery;
 
-        update(fields: object): void;
+        /**
+         * 
+         * @param fields 要更新的列字段对象
+         * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
+         */
+        update(fields: object, related?: boolean): void;
 
         value: string;
     }
@@ -2717,6 +2926,14 @@ declare namespace Layui {
         exportFile(id: string | any[], data?: any[] | null, type?: string): void;
 
         /**
+         * 导出对应 table 的数据或任意自定义数据
+         * @param id table 渲染时的 id 或 要导出的数据表头（当 id 为 array 类型时）
+         * @param [data] 要导出的自定义数据
+         * @param [opts] 导出数据时的属性可选项，支持：type, title(2.7.0)
+         */
+        exportFile(id: string | any[], data?: any[] | null, opts?: { type?: 'csv' | 'xls', title?: string}): void
+
+        /**
          * 获取表格当前页的所有行数据
          * @param [id]  table参数中的id，无id则数字
          */
@@ -2740,12 +2957,14 @@ declare namespace Layui {
          * <br/>&nbsp;    //然后，你就可以使用明确的属性了，两种方式编译后js中均为 let rows=obj; 输出不包含类型
          * <br/>&nbsp;  });
          * <br/>&nbsp;  类型对应： （就是 TableOn+事件类型，无需记忆）
-         * <br/>&nbsp;  checkbox -> TableOnCheckbox
-         * <br/>&nbsp;  toolbar  -> TableOnToolbar
-         * <br/>&nbsp;  tool     -> TableOnTool
-         * <br/>&nbsp;  row      -> TableOnRow
-         * <br/>&nbsp;  edit-    -> TableOnEdit
-         * <br/>&nbsp;  sort     ->  TableOnSort
+         * <br/>&nbsp;  checkbox   -> TableOnCheckbox
+         * <br/>&nbsp;  pagebar   -> TableOnPagebar
+         * <br/>&nbsp;  toolbar    -> TableOnToolbar
+         * <br/>&nbsp;  tool       -> TableOnTool
+         * <br/>&nbsp;  toolDouble -> TableOnToolDouble（2.7.0）
+         * <br/>&nbsp;  row        -> TableOnRow
+         * <br/>&nbsp;  edit-      -> TableOnEdit
+         * <br/>&nbsp;  sort       ->  TableOnSort
          * @param [event]  mod(filter)
          * @param [callback] obj参考上边注释
          */
@@ -2758,6 +2977,15 @@ declare namespace Layui {
          * @param [deep]  true则深度复制
          */
         reload(id: string, option?: TableOption, deep?: boolean): void;
+
+        /**
+         * 表格重载数据
+         * @param [id] table的id，唯一实例标识
+         * @param [option] 基础参数
+         * @param [deep]  true则深度复制
+         * @since 2.7.0
+         */
+        reloadData(id: string, option?: TableOption, deep?: boolean): void;
 
         /**
          * 核心入口
@@ -3428,6 +3656,12 @@ declare namespace Layui {
         escape(str?: any): string;
 
         /**
+         * 将转义后的 HTML 还原
+         * @since 2.6.0
+         */
+        unescape(str?: any): string;
+
+        /**
          *  批量处理事件
          * @param [attr]  绑定需要监听事件的元素属性
          * @param [obj]  事件回调链
@@ -3468,6 +3702,9 @@ declare namespace Layui {
             ,util: Function
             [index:string]:Function
         }*/
+        /**
+         * layui.js所在目录，如果是 script 单独引入 layui.js，无需设定该参数
+         */
         dir: string;
         /**
          * 记录模块自定义事件
@@ -3542,5 +3779,11 @@ declare namespace Layui {
         util: Util;
     }
 }
+
+/**
+ * 动态加载等特殊场景设置layui目录
+ * @since 2.6.6
+ */
+declare const LAYUI_GLOBAL: {dir: string};
 
 declare const layui: Layui;
