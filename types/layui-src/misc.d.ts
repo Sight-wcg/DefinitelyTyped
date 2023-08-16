@@ -251,6 +251,12 @@ declare namespace Layui {
          * @param [options] 基础参数
          */
         set(options?: CarouselOption): Carousel;
+        /**
+         * 轮播的手动切换
+         * @param index 轮播下标，从 0 开始计算
+         * @since 2.8.0
+         */
+        goto(index: number): void;
     }
 
     /**
@@ -261,6 +267,98 @@ declare namespace Layui {
          * 指定元素的选择器 默认值为 `.layui-code`
          */
         elem?: string;
+        /**
+         * 是否开启 Code 预览功能，可选值有：
+         * - `true` 开启 Code 的普通预览
+         * - `false` 关闭 Code 预览（默认）
+         * - `"iframe"` 开启 Code 在 iframe 模式中预览
+         * 
+         * 当开启该属性时，elem 指定的元素需要设置成以下结构：
+         * ```
+         * <pre class="layui-code" lay-options="{}">
+         *   <textarea>
+         * code content
+         *   </textarea>
+         * </pre>
+         * ```
+         * @since 2.8.0
+         */
+        preview?: boolean | 'iframe';
+        /**
+         * 开启预览后的面板布局方式，值为一个数组，数组的可选成员有：
+         * - code 代码区域
+         * - preview 预览区域
+         * 
+         * 面板将根据数组的排列顺序来显示，如：
+         * ```
+         * layout: ['code', 'preview']
+         * ```
+         * @since 2.8.0
+         */
+        layout?: ('code'|'preview')[];
+        /**
+         * 设置 Code 和预览区域的公共样式
+         * @since 2.8.0
+         */
+        style?: string;
+        /**
+         * 设置 Code 区域的局部样式，优先级高于 {@link CodeOption.style|style} 属性
+         * @since 2.8.0
+         */
+        codeStyle?: string;
+        /**
+         * 设置预览区域的局部样式，优先级高于 {@link CodeOption.style|style} 属性
+         * @since 2.8.0
+         */
+        previewStyle?: string;
+        /**
+         * 设置实例的唯一索引
+         * @since 2.8.0
+         */
+        id?: string;
+        /**
+         * 追加实例面板的 `className`，以便对其自定义样式
+         * @since 2.8.0
+         */
+        className?: string;
+        /**
+         * 用于开启 `preview` 属性后的面板头部右侧区域工具栏图标，值为一个数组，内置成员：
+         * - `full` 最大化显示
+         * - `window` 在新窗口预览。一般当 `layout: 'iframe'` 时开启，且 `code` 中须包含完整的 `HTML` 方可在新窗口正常预览
+         * 
+         * 工具图标将根据数组的排列顺序来显示，如：
+         * ```
+         * tools: ['full', 'window']
+         * ```
+         * 亦可自定义值，值对应图标 `className` 的 `layui-icon-` 后的名称，并通过 `toolsEvent` 回调函数中处理事件
+         * @since 2.8.0
+         */
+        tools?: ('full' | 'window')[];
+        /**
+         * 点击工具栏的回调函数，函数返回 tools 设置的名称
+         * @param [othis] 当前图标元素对象
+         * @param [type] tools 中设置的对应值
+         * @since 2.8.0
+         */
+        toolsEvent?(othis?: JQuery, type?: string): void;
+        /**
+         * 自定义默认文本
+         * @example
+         * ```
+         * text: {
+         *   code: '代码栏标题', // 默认:  </>
+         *   preview: '预览栏标题' // 默认: Preview
+         * }
+         * ```
+         * @since 2.8.0
+         */
+        text?: {code?: string, preview?: string};
+        /**
+         * 是否开启 Code 栏头部区域
+         * @default false
+         * @since 2.8.0
+         */
+        header?: boolean;
         /**
          * 是否显示行号
          * @default true
@@ -287,6 +385,14 @@ declare namespace Layui {
          * 自定义右上角内容，可传入任意 html
          */
         about?: boolean;
+        /**
+         * 组件渲染完毕的回调函数
+         * @param obj 参数
+         * - obj.container 当前面板的容器对象
+         * - obj.render() 对预览中的 `element,form` 等组件进行渲染
+         * @since 2.8.0
+         */
+        done?(obj?: {container: JQuery, render():void}):void;
     }
 
     interface ColorPickerOption {
@@ -332,6 +438,19 @@ declare namespace Layui {
          * 颜色选择后的回调
          */
         done?(this: ColorPickerOption, color: string): void;
+
+        /**
+         * 取消颜色选择的回调函数
+         * @param [value] 当前颜色值
+         * @since 2.8.0
+         */
+        cancel(color?: string): void;
+        /**
+         * 颜色选择面板被关闭触发的回调函数
+         * @param [value] 当前颜色值
+         * @since 2.8.0
+         */
+        close(color?: string): void;
     }
 
     // https://www.layui.com/doc/modules/colorpicker.html
@@ -367,6 +486,12 @@ declare namespace Layui {
          * 菜单项的超链接地址。若填写，点击菜单将直接发生跳转。
          */
         href?: string;
+        /**
+         * 菜单项是否禁用状态
+         * @default false
+         * @since 2.8.0
+         */
+        disabled: boolean;
         /**
          * 菜单项超链接的打开方式，需 href 填写才生效。 <br/>&nbsp;
          * 一般可设为 _blank 或 _self 等 默认：_self
@@ -435,15 +560,38 @@ declare namespace Layui {
          */
         style?: string;
         /**
+         * 设置弹出时的遮罩。支持以下方式赋值：
+         * - 若值为 `number` 类型，则表示为遮罩透明度，如: `shade: 0.3`
+         * - 若值为 Array 类型，则可同时设置透明度和背景色，如: `shade: [0.3, '#000']`
+         * @default 0
+         * @since 2.8.0
+         */
+        shade: number | (string | number)[];
+        /**
          * 全局定义菜单的列表模板，添加任意 html 字符，模版将被 laytpl 组件所转义，<br/>&nbsp;
          *  因此可通过 {{ d.title }} 的方式得到当前菜单配置的数据。<br/>&nbsp;
          *   详见 https:// www.layui.com/doc/modules/dropdown.html#templet
+         * @example
+         * ```
+         * // 2.8.0 支持函数类型
+         * templet: function(d){
+         *   return '<i class="layui-icon layui-icon-tips"></i> ' + d.title;
+         * }
+         * ```
          */
-        templet?: string;
+        templet?: string | ((d: object) => string);
         /**
          * 自定义组件内容，从而替代默认的菜单结构
          */
         content?: string;
+
+        /**
+         * 设置触发点击事件的菜单范围。支持以下可选值：
+         * - `all`: 即代表父子菜单均可触发事件
+         * - 默认无需设置，即父级菜单不触发事件
+         * @since 2.8.0
+         */
+        clickScope?: string;
 
         /**
          * 组件成功弹出后的回调，并返回两个参数
@@ -454,8 +602,10 @@ declare namespace Layui {
 
         /**
          * 菜单项被点击时的回调，并返回两个参数
+         * 
+         * 若返回 false，则点击选项可不关闭面板（2.8.0）
          */
-        click?(data: any, othis: JQuery): void;
+        click?(data: any, othis: JQuery): boolean;
     }
 
     /**
@@ -487,16 +637,31 @@ declare namespace Layui {
         on(event: string, callback: (this: HTMLElement, obj: any) => any): any;
 
         /**
-         *  重载实例
+         * 重载实例
          * @param [id]  id参数为render>options中的id，如果render时未指定id则从1开始。
          * @param [options]  全部基础参数
          */
         reload(id: string, options: DropDownOptionForReload): DropDownModule;
 
         /**
+         * 仅数据或内容重载 
+         * @param [id]  id参数为render>options中的id，如果render时未指定id则从1开始。
+         * @param [options]  全部基础参数
+         * @since 2.8.0
+         */
+        reloadData(id: string, options: DropDownOptionForReload): DropDownModule;
+
+        /**
          * 核心入口
          */
         render(options: DropDownOption): DropDownModule;
+
+        /**
+         * 关闭面板
+         * @param id 组件渲染时定义的 id 属性值
+         * @since 2.8.0
+         */
+        close(id: string): DropDownModule;
     }
 
     interface TabOption {
@@ -752,7 +917,7 @@ declare namespace Layui {
 
         /**
          * 允许指定表单元素的 jQuery 对象，从而完成定向渲染。且支持两种方式的指向：
-         * - 若 jQuery 对象指向表单域容器（class="layui-form"），则渲染该表单域中的所有表单项(2.8)
+         * - 若 jQuery 对象指向表单域容器（class="layui-form"），则渲染该表单域中的所有表单项(2.8.0)
          * - 若 jQuery 对象指向的不是表单域容器，则只对该对象进行渲染
          * @example
          * ```
@@ -999,9 +1164,9 @@ declare namespace Layui {
         hasScrollbar(): boolean;
 
         /**
-         * 将元素定位到指定目标元素附近
+         * 将视图元素定位到指定目标元素附近
          * @param elem 目标元素
-         * @param elemView 定位元素
+         * @param elemView 视图元素
          * @param [obj] 
          */
         position(elem: HTMLElement, elemView: HTMLElement, obj?: {position?: 'fixed', clickType?: 'right', align?: 'center' | 'right', SYSTEM_RELOAD?: boolean}): void;
@@ -1042,6 +1207,18 @@ declare namespace Layui {
          * 开启左右面板范围选择
          */
         range?: string | boolean | any[];
+        /**
+         * 是否开启日期范围选择时的区间联动标注模式，该模式必须开启 range 属性后生效。日期范围默认采用的是左右面板独立选择模式，设置该属性后，将采用左右面板联动选择模式
+         * @default false
+         * @since 2.8.0
+         */
+        rangeLinked?: boolean;
+        /**
+         * 是否开启全面板，即日期和时间显示在同一面板。 当 `type: 'datetime'` 且未设置 `range` 属性时生效
+         * @default false
+         * @since 2.8.0
+         */
+        fullPanel?: boolean;
         /**
          * 自定义格式 默认值：yyyy-MM-dd  实例： 'yyyy年MM月dd日'    <br/>&nbsp;
          *    yyyy    年份，至少四位数。如果不足四位，则前面补零    <br/>&nbsp;
@@ -1084,6 +1261,44 @@ declare namespace Layui {
          *   用于控制是否自动向元素填充初始值（需配合 value 参数使用）
          */
         isInitValue?: boolean;
+        /**
+         * 开启面板左侧的快捷选择栏，
+         * 其中 `value` 支持以下类型：
+         * - 若为 `string` 类型，必须和 `format` 设置的格式对应
+         * - 若为 `Date` 对象类型，则可通过操作 `new Date()` 来对选项值进行相应的返回计算
+         * - 若为 `Array` 类型，则数组成员可填写开始日期和结束日期
+         * @example
+         * ```
+         * shortcuts: [
+         *   {
+         *     text: "某一天", // 快捷选项文本
+         *     value: '2023-05-01' // 快捷选项值， string 类型必须和 format 设置的格式对应
+         *   },
+         *   {
+         *     text: "今天",
+         *     value: Date.now() // Date 类型
+         *   },
+         *   {
+         *     text: "明天",
+         *     value: function(){
+         *       var now = new Date();
+         *       now.setDate(now.getDate() + 1);
+         *       return now;
+         *     }()
+         *   },
+         *   {
+         *     text: "未来一年",
+         *     value: function(){  // 数组类型可指定时间范围
+         *       var now = new Date();
+         *       now.setFullYear(now.getFullYear() + 1);
+         *       return [new Date(), now]; 
+         *     }
+         *   },
+         * ]
+         * ```
+         * @since 2.8.0
+         */
+        shortcuts: {text: string, value: string | Date | Date[]}[]
         /**
          * 设置起始周。 支持 0-6 的数字，0 即代表从周日开始
          * @default 0
@@ -1132,6 +1347,13 @@ declare namespace Layui {
          */
         zIndex?: number;
         /**
+         * 开启弹出日期面板时的遮罩
+         * - 若为 number 类型，则表示遮罩透明度。如 `shade: 0.5`
+         * - 若为 Array 类型，则可设置遮罩颜色和透明度，如：`shade: [0.5, '#000']`
+         * @since 2.8.0
+         */
+        shade?: number | (string | number)[];
+        /**
          *  是否显示底部栏
          */
         showBottom?: boolean;
@@ -1140,13 +1362,26 @@ declare namespace Layui {
          */
         btns?: Array<'clear' | 'now' | 'confirm'>;
         /**
+         * 是否在选中目标值时即自动确认
+         * @since 2.8.0
+         */
+        autoConfirm: boolean;
+        /**
          * 语言 内置了两种语言版本：cn（中文版）、en（国际版，即英文版） ，默认值：cn
          */
         lang?: 'cn' | 'en';
         /**
          * 主题 ，默认值：default
+         * @example
+         * ```
+         * theme: '#FF5722' // 自定义主题
+         * theme: 'molv' // 内置墨绿色主题
+         * theme: 'grid' // 内置格子主题
+         * theme: 'circle' // 内置圆圈高亮主题（2.8.0）
+         * theme: ['grid', '#FF5722'] // 格子主题+自定义颜色，顺序无关，自定义颜色优先级更高（2.8.0）
+         * ```
          */
-        theme?: string | 'default' | 'molv' | 'grid';
+        theme?: string | 'default' | 'molv' | 'grid' | 'circle' | Array<string | 'molv' | 'grid' | 'circle'>;
         /**
          * 是否显示公历节日  默认值：false
          */
@@ -1180,6 +1415,30 @@ declare namespace Layui {
          */
         done?(value: string, date: DateParam, endDate: DateParam): void;
         /**
+         * 点击底部栏「确定」按钮时的回调函数
+         * @param [value] 得到日期生成的值，如：2017-08-18 范围："2021-07-06 - 2021-08-09"
+         * @param [date] 得到日期时间对象：{year: 2017, month: 8, date: 18, hours: 0, minutes: 0, seconds: 0}
+         * @param [endDate] 开启范围选择（range: true）才会返回。对象成员同上date
+         * @since 2.8.0
+         */
+        onConfirm?(value: string, date: DateParam, endDate: DateParam): void;
+        /**
+         * 点击底部栏「现在」按钮时的回调函数
+         * @param [value] 得到日期生成的值，如：2017-08-18 范围："2021-07-06 - 2021-08-09"
+         * @param [date] 得到日期时间对象：{year: 2017, month: 8, date: 18, hours: 0, minutes: 0, seconds: 0}
+         * @param [endDate] 开启范围选择（range: true）才会返回。对象成员同上date
+         * @since 2.8.0
+         */
+        onNow?(value: string, date: DateParam, endDate: DateParam): void;
+        /**
+         * 点击底部栏「清空」按钮时的回调函数
+         * @param [value] 得到日期生成的值，如：2017-08-18 范围："2021-07-06 - 2021-08-09"
+         * @param [date] 得到日期时间对象：{year: 2017, month: 8, date: 18, hours: 0, minutes: 0, seconds: 0}
+         * @param [endDate] 开启范围选择（range: true）才会返回。对象成员同上date
+         * @since 2.8.0
+         */
+        onClear?(value: string, date: DateParam, endDate: DateParam): void;
+        /**
          * 组件面板被完全关闭（移除）后触发的回调
          * @param [this] 组件实例
          * @since 2.7.4
@@ -1211,6 +1470,31 @@ declare namespace Layui {
          */
 
         path: string;
+
+        /**
+         * 在指定的日期面板弹出一个提示层
+         * @param id 组件渲染时定义的 id 属性值
+         * @param [option] 弹出提示选项
+         * - option.content 提示内容
+         * - option.ms 提示层自动消失所需的毫秒数
+         * @since 2.8.0
+         */
+        hint(id: string, option?: {content: string, ms: number}): void;
+
+        /**
+         * 获取 laydate 对应 id 的实例
+         * @param [id] 组件渲染时定义的 id 属性值
+         * @since 2.8.0
+         */
+        getInst(id?: string): Laydate;
+
+        /**
+         * 解除实例绑定 
+         * @remark 对目标元素对应的实例的完全解除，即触发元素事件时，不再执行组件渲染
+         * @param [id] 组件渲染时定义的 id 属性值
+         * @since 2.8.0
+         */
+        unbind(id?: string): void;
 
         /**
          * 关闭日期面板
@@ -1277,6 +1561,7 @@ declare namespace Layui {
     // https://www.layui.com/doc/modules/layedit.html
     /**
      * 富文本编辑器
+     * @deprecated 2.8.0 已移除
      */
     interface Layedit {
         /**
@@ -1346,7 +1631,10 @@ declare namespace Layui {
          * 样式类名，允许你传入layer内置的样式class名，还可以传入您自定义的class名
          * @default    ''
          * @example
-         * skin: 'demo-class'
+         * skin: 'demo-class' // 自定义
+         * skin:'layui-layer-lan' // 内置深蓝主题
+         * skin: 'layui-layer-molv' // 内置墨绿主题
+         * skin: 'layui-layer-win10' // 内置 Windows 10 风格主题，2.8.0
          */
         skin?: string;
         /**
@@ -1445,7 +1733,8 @@ declare namespace Layui {
         // https://www.layui.com/doc/modules/layer.html#anim
         /**
          * 弹出动画     <br/>&nbsp;
-         *   目前anim可支持的动画类型有0-6 如果不想显示动画，设置 anim: -1 即可
+         *   目前anim可支持的动画类型有0-6 如果不想显示动画，设置 anim: -1 即可<br>&nbsp;
+         *   2.8.0 新增四个方向动画
          *   @default 0
          *   @example
          *   anim: -1 // 不显示动画
@@ -1456,6 +1745,10 @@ declare namespace Layui {
          *   anim: 4 // 从左翻滚
          *   anim: 5 // 渐显
          *   anim: 6 // 抖动
+         *   anim: 'slideDown' // 从上往下
+         *   anim: 'slideLeft' // 从右往左
+         *   anim: 'slideUp' // 从下往上
+         *   anim: 'slideRight' // 从左往右
          */
         anim?: number;
         /**
@@ -1549,8 +1842,11 @@ declare namespace Layui {
         tipsMore?: boolean;
         /**
          * 层弹出后的成功回调方法
+         * @param [layero] 弹层的最外层元素的 jQuery 对象
+         * @param [index] 弹层的索引值
+         * @param [that] 弹层内部原型链中的 this, 当前弹层实例对象（2.8.0）
          */
-        success?(layero: JQuery, index: number): void;
+        success?(layero?: JQuery, index?: number, that?: any): void;
         /**
          * 确定按钮回调方法
          */
@@ -1591,8 +1887,15 @@ declare namespace Layui {
         restore?: LayerCallbackRestore;
         /**
          * 最小化后是否默认堆叠在左下角 默认：true
+         * @since 2.6
          */
         minStack?: boolean;
+        /**
+         * 是否移除弹层触发元素的焦点，避免按回车键时重复弹出
+         * @default true
+         * @since 2.8.0
+         */
+        removeFocus?: boolean;
     }
 
     /**
@@ -1665,6 +1968,11 @@ declare namespace Layui {
          * ['800px', '350px']
          */
         area?: string[];
+        /**
+         * 输入框内容为空时的占位符
+         * @since 2.8.0
+         */
+        placeholder: string;
     }
 
     interface LayerTabOptions extends LayerOptions {
@@ -1683,6 +1991,12 @@ declare namespace Layui {
          * @param [layero] 当前元素
          */
         tab?(pic: LayerPhotosDataItem, layero: JQuery): void;
+        /**
+         * 是否隐藏图片底部栏
+         * @default false
+         * @since 2.8.0
+         */
+        hideFooter: boolean;
     }
 
     interface LayerPhotosData {
@@ -1885,6 +2199,13 @@ declare namespace Layui {
          * @param [callback]  关闭所有层后执行回调
          */
         closeAll(callback: () => any): void;
+
+        /**
+         * 关闭最近一次打开的层 
+         * @param type 弹层的类型
+         * @since 2.8.0
+         */
+        closeLast(type?: 'dialog' | 'page' | 'iframe' | 'loading' | 'tips'): void;
 
         /**
          * 重新定义层的样式
@@ -2105,7 +2426,13 @@ declare namespace Layui {
      * 模板引擎
      */
     interface Laytpl {
-        (tpl: string): TplObject;
+        /**
+         * @param tpl 模板原始字符
+         * @param [options] 属性配置项，局部配置
+         * - options.open 标签符前缀
+         * - options.close 标签符后缀
+         */
+        (tpl: string, options?: { open?: string; close?: string }): TplObject;
 
         /**
          * 重新定义分隔符 <br/>&nbsp;
@@ -2273,6 +2600,12 @@ declare namespace Layui {
          * @param [value] 滑块为范围模式是数组，否则是数字
          */
         change?(value: number | number[]): void;
+        /**
+         * 滑块拖拽完毕的回调函数，滑块拖动过程中不会触发
+         * @param [value] 滑块当前值
+         * @since 2.8.0
+         */
+        done?(value: number | number[]): void;
     }
 
     // https://www.layui.com/doc/modules/slider.html
@@ -2320,6 +2653,11 @@ declare namespace Layui {
          */
         title?: string;
         /**
+         * 设置列的字段标题。该属性在筛选列和导出场景中优先级高于 {@link TableColumnOption.title|title} 属性
+         * @since 2.8.0
+         */
+        fieldTitle?: string;
+        /**
          * 设定列宽，若不填写，则自动分配；若填写，则支持值为：数字、百分比。    <br/>&nbsp;
          *   请结合实际情况，对不同列做不同设定。
          */
@@ -2329,6 +2667,11 @@ declare namespace Layui {
          *   一般用于列宽自动分配的情况。其优先级高于基础参数中的 cellMinWidth
          */
         minWidth?: number;
+        /**
+         * 设置当前列的最大宽度。其优先级高于基础属性中的 {@link TableOption.cellMaxWidth|cellMaxWidth} 
+         * @since 2.8.0
+         */
+        maxWidth?: number;
         /**
          * 设定列类型,可选有： 默认：normal
          */
@@ -2433,11 +2776,24 @@ declare namespace Layui {
 
     /**
      * table 的templet回调参数格式 <br/>&nbsp;
-     *  tips:templet回调中可以使用 d.xx  xx为任意参数
+     *  tips:templet回调中可以使用 d.xx  xx为任意参数 <br/>&nbsp;
+     *  2.8.0 序号: `LAY_INDEX` → `LAY_NUM`；下标: `LAY_TABLE_INDEX` → `LAY_INDEX`
      */
     interface TableColumnOptionForTemplet {
         LAY_COL: TableColumnOptionForTempletCol;
+        /**
+         * 序号
+         * @since 2.8.0
+         */
+        LAY_NUM: number;
+        /**
+         * 下标
+         */
         LAY_INDEX: number;
+        /**
+         * 下标
+         * @deprecated 2.8.0 移除，改为 `LAY_INDEX`
+         */
         LAY_TABLE_INDEX: number;
         /**
          * @since 2.7.1
@@ -2605,13 +2961,26 @@ declare namespace Layui {
          */
         width?: number | string;
         /**
-         * 设定容器高度,如：'full-100'
+         * 设置表格容器高度，默认自适应
+         * - `height: 315` 设置固定高度
+         * - `height: 'full-30'` 设置自适应高度。这是一个特定的语法格式：full 表示铺满；后面的数字表示当前 table 之外的元素占用的高度，如：表格头部到页面最顶部加表格底部距离页面最底部的“距离和”
+         * - `height: '#id-30'` 设置相对父元素的高度自适应，其中 #id 即父元素的 ID 选择器，其计算原理和上述 full 相同（2.8.0）
          */
         height?: number | string;
+        /**
+         * 设置表格容器的最大高度，设置该属性后，height 属性将被认定为默认的自适应值
+         * @since 2.8.0
+         */
+        maxHeight?: number;
         /**
          * 全局定义所有常规单元格的最小宽度（默认：60）
          */
         cellMinWidth?: number;
+        /**
+         * 设置所有普通单元格的最大宽度。其优先级低于表头属性中的 {@link TableColumnOption.maxWidth|maxWidth}
+         * @since 2.8.0
+         */
+        cellMaxWidth?: number;
         /**
          * 设置重载数据或切换分页时的滚动条位置状态
          * - `fixed` 重载数据时，保持滚动条位置不变
@@ -2762,6 +3131,10 @@ declare namespace Layui {
     interface TableOnCheckbox {
         checked: true;
         data: object;
+        /**
+         * @since 2.8.0
+         */
+        config: TableOption;
 
         del(): void;
 
@@ -2797,6 +3170,10 @@ declare namespace Layui {
      */
     interface TableOnTool {
         data: object;
+        /**
+         * @since 2.8.0
+         */
+        config: TableOption;
 
         del(): void;
 
@@ -2816,6 +3193,10 @@ declare namespace Layui {
      */
     interface TableOnToolDouble {
         data: object;
+        /**
+         * @since 2.8.0
+         */
+        config: TableOption;
 
         del(): void;
 
@@ -2834,6 +3215,10 @@ declare namespace Layui {
      */
     interface TableOnRow {
         data: object;
+        /**
+         * @since 2.8.0
+         */
+        config: TableOption;
 
         del(): void;
 
@@ -2844,6 +3229,39 @@ declare namespace Layui {
          * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
          */
         update(fields: object, related?: boolean): void;
+        /**
+         * 设置当前行选中状态
+         * @param option 设置行选中时的可选属性
+         * @since 2.8.0
+         */
+        setRowChecked(option: setRowCheckedOption): void;
+    }
+
+    /**
+     * 双击table中行后回调参数的类型
+     */
+    interface TableOnRowDouble {
+        data: object;
+        /**
+         * since 2.8.0
+         */
+        config: TableOption;
+
+        del(): void;
+
+        tr: JQuery;
+        /**
+         * 
+         * @param fields 要更新的列字段对象
+         * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
+         */
+        update(fields: object, related?: boolean): void;
+        /**
+         * 设置当前行选中状态
+         * @param option 设置行选中时的可选属性
+         * @since 2.8.0
+         */
+        setRowChecked(option: setRowCheckedOption): void;
     }
 
     /**
@@ -2851,6 +3269,10 @@ declare namespace Layui {
      */
     interface TableOnEdit {
         data: object;
+        /**
+         * @since 2.8.0
+         */
+        config: TableOption;
 
         del(): void;
 
@@ -2865,6 +3287,21 @@ declare namespace Layui {
         update(fields: object, related?: boolean): void;
 
         value: string;
+        /**
+         * 字段修改前的旧值
+         * @since 2.8.0
+         */
+        oldValue: string;
+        /**
+         * 重新编辑
+         * @since 2.8.0
+         */
+        reedit(): void;
+        /**
+         * 获取当前列表头配置信息
+         * @since 2.8.0
+         */
+        getCol(): TableColumnOption;
     }
 
     /**
@@ -2873,6 +3310,77 @@ declare namespace Layui {
     interface TableOnSort {
         field: string;
         type: string;
+    }
+
+    /**
+     * 列拖拽宽度后的事件
+     * @since 2.8.0
+     */
+    interface TableOnColResized{
+      col: TableColumnOption;
+      config: TableOption;
+    }
+
+    /**
+     * 列筛选（显示或隐藏）后的事件
+     * @since 2.8.0
+     */
+    interface TableOnColToggled{
+      col: TableColumnOption;
+      config: TableOption;
+    }
+
+    /**
+     * 行右键菜单事件，需设置属性 `defaultContextmenu:false` 才生效
+     * @since 2.8.0
+     */
+    interface TableOnRowContextmenu{
+        data: object;
+        index: string;
+        config: TabOption;
+
+        del(): void;
+
+        event: string;
+        tr: JQuery;
+        /**
+         * 
+         * @param fields 要更新的列字段对象
+         * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
+         */
+        update(fields: object, related?: boolean): void;
+        /**
+         * 设置当前行选中状态
+         * @param option 设置行选中时的可选属性
+         * @since 2.8.0
+         */
+        setRowChecked(option: setRowCheckedOption): void;
+    }
+
+    /**
+     * 设置行选中时的可选属性
+     * @since 2.8.0
+     */
+    interface setRowCheckedOption{
+      /**
+       * 选中方式
+       * @default 'checkbox''
+       */
+      type?: 'checkbox' | 'radio';
+      /**
+       * 选中行的下标。即数据的所在数组下标（0 开头）。可设置 `all` 表示全选
+       */
+      index?: string | number;
+      /**
+       * 选中状态值。 若为 `false` 可取消选中。
+       * @default true
+       */
+      checked?: boolean;
+      /**
+       * 是否仅设置样式状态。若为 `true` 则只标注选中样式，不对数据中的 `LAY_CHECKED` 属性赋值。
+       * @default false
+       */
+      selectedStyle?: boolean;
     }
 
     // https://www.layui.com/doc/element/table.html
@@ -2897,7 +3405,8 @@ declare namespace Layui {
 
         config: {
             checkName: 'LAY_CHECKED'; // 是否选中状态的字段名
-            indexName: 'LAY_TABLE_INDEX'; // 初始下标索引名，用于恢复排序
+            //indexName: 'LAY_TABLE_INDEX'; // 初始下标索引名，用于恢复排序，2.8.0 改为 LAY_INDEX
+            indexName: 'LAY_INDEX'; // 初始下标索引名，用于恢复排序
         };
 
         /**
@@ -2958,13 +3467,17 @@ declare namespace Layui {
          * <br/>&nbsp;  });
          * <br/>&nbsp;  类型对应： （就是 TableOn+事件类型，无需记忆）
          * <br/>&nbsp;  checkbox   -> TableOnCheckbox
-         * <br/>&nbsp;  pagebar   -> TableOnPagebar
+         * <br/>&nbsp;  pagebar   -> TableOnPagebar（2.7.0）
          * <br/>&nbsp;  toolbar    -> TableOnToolbar
          * <br/>&nbsp;  tool       -> TableOnTool
          * <br/>&nbsp;  toolDouble -> TableOnToolDouble（2.7.0）
          * <br/>&nbsp;  row        -> TableOnRow
+         * <br/>&nbsp;  rowDouble        -> TableOnRowDouble
          * <br/>&nbsp;  edit-      -> TableOnEdit
          * <br/>&nbsp;  sort       ->  TableOnSort
+         * <br/>&nbsp;  colResized       ->  TableOnColResized（2.8.0）
+         * <br/>&nbsp;  colToggled       ->  TableOnColToggled（2.8.0）
+         * <br/>&nbsp;  rowContextmenu       ->  TableOnRowContextmenu （2.8.0）
          * @param [event]  mod(filter)
          * @param [callback] obj参考上边注释
          */
@@ -3004,6 +3517,367 @@ declare namespace Layui {
          * @param [option] 基础参数
          */
         set(option?: TableOption): Table;
+
+        /**
+         * 设置行选中状态
+         * @param id table 渲染时的 id 属性值
+         * @param [option] 
+         * @since 2.8.0
+         */
+        setRowChecked(id: string, option?: setRowCheckedOption): void;
+        /**
+         * 获取指定 id 对应的表格实例配置项
+         * @param id table 渲染时的 id 属性值
+         * @since 2.8.0
+         */
+        getOptions(id: string): TableOption;
+        /**
+         * 设置列显示或隐藏
+         * @param id table 渲染时的 id 属性值
+         * @param cols 设置列（表头）显示或隐藏状态
+         * @since 2.8.0
+         */
+        hideCol(id: string, cols: boolean | {field: TableColumnOption['field'], hide: boolean} | Array<{field: TableColumnOption['field'], hide: boolean}>): void;
+    }
+
+    /**
+     * 树表 `tree.callback` 事件回调相关的属性
+     * @since 2.8.0
+     */
+    interface TreeTableTreeOptionCallback{
+      /**
+       * 展开前回调函数，可以在展开或者关闭之前调用，若回调返回 false 则取消该次操作
+       * 
+       * @param tableId 当前表格 id
+       * @param trData 当前操作的行数据
+       * @param expandFlag 要展开或关闭的状态
+       * @since 2.8.0
+       */
+      beforeExpand(tableId: string, trData: object, expandFlag: boolean): boolean|void;
+      /**
+       * 展开或关闭后的回调函数
+       * 
+       * @param tableId 当前表格 id
+       * @param trData 当前操作的行数据
+       * @param expandFlag 要展开或关闭的状态
+       * @since 2.8.0
+       */
+      onExpand(tableId: string, trData: object, expandFlag: boolean):void
+    }
+
+    /**
+     * 树表 `tree.async`异步相关的属性集合
+     * @since 2.8.0
+     */
+    interface TreeTableTreeOptionAsync{
+      /**
+       * 是否开启异步加载模式。只有开启时 async 的其他属性配置才有效。 注意： 异步加载子节点不应跟 simpleData 同时开启，可以是 url+simpleData 的方式，获取完整的简单数据进行转换。若开启异步加载模式，即表示按需异步加载子节点
+       * @default false
+       * @since 2.8.0
+       */
+      enable?: boolean;
+      /**
+       * 异步加载的接口，若与顶层接口相同可不设置
+       * @since 2.8.0
+       */
+      url?: string;
+      /**
+       * 请求的接口类型，若与顶层接口相同可不设置
+       * @since 2.8.0
+       */
+      type?: string;
+      /**
+       * 提交参数的数据类型，若与顶层接口相同可不设置
+       * @since 2.8.0
+       */
+      contentType?: string;
+      /**
+       * 提交请求头，若与顶层接口相同可不设置
+       * @since 2.8.0
+       */
+      headers?: object;
+      /**
+       * 提交参数的数据，若与顶层接口相同可不设置
+       * @since 2.8.0
+       */
+      where?: object;
+      /**
+       * 自动参数，可以根据配置项以及当前节点的数据传参，如:
+       * @example
+       * ```js
+       * ['type', 'age=age', 'parentId=id']
+       * ```
+       * 那么其请求参数将包含:
+       * ```
+       * {type: '父节点 type', age: '父节点 age', parentId: '父节点 id'}
+       * ```
+       * @since 2.8.0
+       */
+      autoParam?: string[];
+    }
+
+    /**
+     * 树表 `tree.data` 数据相关的属性集合
+     * @since 2.8.0
+     */
+    interface TreeTableTreeOptionData{
+      /**
+       * 是否简单数据模式
+       * @default false
+       * @since 2.8.0
+       */
+      isSimpleData?: boolean;
+      /**
+       * 设置根节点的 pid 属性值
+       * @default null
+       * @since 2.8.2
+       */
+      rootPid?: string | null;
+    }
+
+    /**
+     * 树表 `tree.view` 视图相关的属性
+     * @since 2.8.0
+     */
+    interface TreeTableTreeOptionView{
+      /**
+       * 层级缩进量
+       * @default 14
+       * @since 2.8.0
+       */
+      indent?: number;
+      /**
+       * 关闭时的折叠图标
+       * @since 2.8.0
+       */
+      flexIconClose?: string;
+      /**
+       * 打开时的折叠图标
+       * @since 2.8.0
+       */
+      flexIconOpen?: string;
+      /**
+       * 是否显示节点图标
+       * @default true
+       * @since 2.8.0
+       */
+      showIcon?: boolean;
+      /**
+       * 自定义节点图标。若设置了该属性或数据中有该字段信息，不管打开还是关闭都以这个图标的值为准
+       * @since 2.8.0
+       */
+      icon?: string;
+      /**
+       * 自定义关闭时的节点图标
+       * @since 2.8.0
+       */
+      iconClose?: string;
+      /**
+       * 自定义打开时的节点图标
+       * @since 2.8.0
+       */
+      iconOpen?: string;
+      /**
+       * 叶子节点的图标
+       * @since 2.8.0
+       */
+      iconLeaf?: string;
+      /**
+       * 若非父节点时，是否显示折叠图标
+       * @default false
+       * @since 2.8.0
+       */
+      showFlexIconIfNotParent?: boolean;
+      /**
+       * 双击节点时，是否自动展开父节点
+       * @default true
+       * @since 2.8.0  
+       */
+      dblClickExpand?: boolean;
+    }
+
+    /**
+     * 树表 `tree.customName` 自定义属性名
+     * @since 2.8.0
+     */
+    interface TreeTableTreeOptionCustomName{
+      /**
+       * 自定义「子节点集合」的属性名
+       * @default 'children'
+       * @since 2.8.0'
+       */
+      children?: string;
+      /**
+       * 自定义「是否属于父节点」的属性名
+       * @default 'isParent''
+       * @since 2.8.0
+       */
+      isParent?: string;
+      /**
+       * 自定义「节点」属性名
+       * @default 'name'
+       * @since 2.8.0
+       */
+      name?: string;
+      /**
+       * 自定义「节点索引」属性名
+       * @default 'id'
+       * @since 2.8.0
+       */
+      id?: string;
+      /**
+       * 自定义「父节点索引」属性名
+       * @default 'parentId'
+       * @since 2.8.0
+       */
+      pid?: string;
+    }
+
+    /**
+     * 树表 `tree` 选项
+     */
+    interface TreeTableTreeOption{
+      /**
+       * 自定义属性名的集合
+       * @since 2.8.0
+       */
+      customName?: TreeTableTreeOptionCustomName;
+      /**
+       * 视图相关的属性集合
+       * @since 2.8.0
+       */
+      view?: TreeTableTreeOptionView;
+      /**
+       * 数据相关的属性集合
+       * @since 2.8.0
+       */
+      data?: TreeTableTreeOptionData;
+      /**
+       * 异步相关的属性集合
+       * @since 2.8.0
+       */
+      async?: TreeTableTreeOptionAsync;
+      /**
+       * 事件回调相关的属性集合
+       * @since 2.8.0
+       */
+      callback?: TreeTableTreeOptionCallback;
+    }
+
+    interface TreeTableOption extends TableOption{
+      tree?: TreeTableTreeOption;
+    }
+
+    /**
+     * treeTable
+     * @since 2.8.0
+     */
+    interface TreeTable extends Table{
+        /**
+         * treeTable 组件渲染，核心方法
+         * @param [option] 基础参数
+         * @since 2.8.0
+         */
+        render(option?: TreeTableOption): TableRendered;
+
+        /**
+         * 树表完整重载
+         * @param [id] treeTable 的 id，唯一实例标识
+         * @param [option] 基础参数
+         * @since 2.8.0
+         */
+        reload(id: string, option?: TreeTableOption): void;
+
+
+        /**
+         * 树表数据重载
+         * @param [id] treeTable 的 id，唯一实例标识
+         * @param [option] 基础参数
+         * @since 2.8.0
+         */
+        reloadData(id: string, option?: TableOption): void;
+        /**
+         * 获取树表数据
+         * 
+         * 该方法用于获取表格当前页的全部数据，它对应的是接口返回的原始数据，不包含 treeTable 组件内部的特定字段
+         * 
+         * @param id treeTable 渲染时的 id 属性值
+         * @param isSimpleData  是否为简单数据，为 true 时返回简单数据结构的数据，否则则为带层级的数据
+         * @since 2.8.0
+         */
+        getData(id: string, isSimpleData: boolean):any[];
+        /**
+         * 获取树表对应下标的数据
+         * 
+         * 该方法用于获取表格当前页对应下表的数据，返回的数据格式同 `treeTable.getData()` 方法
+         * 
+         * @param id  treeTable 渲染时的 id 属性值
+         * @param index 节点对应的行下标，一般可通过 `<tr>` 元素的 `data-index` 属性获得
+         * @since 2.8.0
+         */
+        getNodeDataByIndex(id: string, index: number):void;
+
+        /**
+         * 更新行数据
+         * @param id treeTable 渲染时的 id 属性值
+         * @param index 节点对应的行下标，一般可通过 `<tr>` 元素的 `data-index` 属性获得
+         * @param data 更新的数据项，可包含要更新的各种字段
+         * @since 2.8.0
+         */
+        updateNode(id: string, index: number, data: any):void;
+        /**
+         * 删除行记录
+         * @param id 
+         * @param index 
+         * @since 2.8.0
+         */
+        removeNode(id, index);
+        /**
+         * 新增行记录
+         * @param id 
+         * @param opts 
+         * @since 2.8.0
+         */
+        addNodes(id, opts);
+        /**
+         * 展开或关闭节点
+         * @param id 
+         * @param opts 
+         * @since 2.8.0
+         */
+        expandNode(id, opts);
+        /**
+         * 展开或关闭全部节点（目前只支持关闭全部）
+         * @param id 
+         * @param expandFlag 
+         * @since 2.8.0
+         */
+        expandAll(id, expandFlag);
+
+        /**
+         * 设置行选中状态
+         * @param id 
+         * @param opts 
+         * @since 2.8.0
+         */
+        setRowChecked(id, opts);
+
+        /**
+         * 全选或取消全选
+         * @param id 
+         * @param checked 
+         * @since 2.8.0
+         */
+        checkAllNodes(id, checked);
+
+        /**
+         * treeTable 相关事件
+         * @param event 
+         * @since 2.8.0
+         */
+        on('event(filter)', callback);
+
+
     }
 
     interface TransferOption {
@@ -3371,16 +4245,31 @@ declare namespace Layui {
          */
         headers?: object;
         /**
-         * 指定允许上传时校验的文件类型， 默认：images (即file,video,audio之外都可)    <br/>&nbsp;
+         * 指定允许上传时校验的文件类型， 默认：images (即file,video,audio之外都可)
+         * 
+         * 可选值有：
+         * - `images` 图片类型
+         * - `file` 所有文件类型
+         * - `video` 视频类型
+         * - `audio` 音频类型
          */
-        //  可选值有：images（图片）、file（所有文件）、video（视频）、audio（音频）
         accept?: 'images' | 'file' | 'video' | 'audio';
         /**
-         * 规定打开文件选择框筛选出的文件类型，值为用逗号隔开。默认：images 如：    <br/>&nbsp;
+         * 规定打开文件选择框筛选出的文件类型，多个 MIME 类型可用逗号隔开。示例：
+         * ```
+         * acceptMime: 'image/*' // 筛选所有图片类型
+         * acceptMime: 'image/jpeg, image/png'// 只显示 jpg 和 png 文件
+         * ```
+         * @see {@link https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Basics_of_HTTP/MIME_types | MIME类型}
          */
-        //  acceptMime: 'image/*'（只显示图片文件）	<br/>&nbsp;
-        //  acceptMime: 'image/jpg, image/png'（只显示 jpg 和 png 文件）
         acceptMime?: string;
+        /**
+         * 规定强制返回的数据格式
+         * - 若值为 ‘json’，则强制校验 JSON 数据格式
+         * @default null
+         * @since 2.6.9
+         */
+        force: string | null;
         /**
          * 允许上传的文件后缀。一般结合 accept 参数类设定。默认：jpg|png|gif|bmp|jpeg    <br/>&nbsp;
          */
@@ -3573,20 +4462,78 @@ declare namespace Layui {
     interface UtilBarOption {
         /**
          * 默认false。如果值为true，则显示第一个bar，带有一个默认图标。    <br/>&nbsp;
+         * @deprecated 2.8.0 已废弃，请使用 {@link UtilBarOption.bars|bars}
+         * @see {@link UtilBarOption.bars|bars}
          */
         //  如果值为图标字符，则显示第一个bar，并覆盖默认图标
         bar1?: boolean | string;
         /**
          * 默认false。如果值为true，则显示第二个bar，带有一个默认图标。    <br/>&nbsp;
+         * @deprecated 2.8.0 已废弃，请使用 {@link UtilBarOption.bars|bars}
+         * @see {@link UtilBarOption.bars|bars}
          */
         //  如果值为图标字符，则显示第二个bar，并覆盖默认图标
         bar2?: boolean | string;
+        /**
+         * 设置固定工具条列表
+         * @example
+         * ```
+         * bars: [
+         *   {
+         *     type: '', // bar 类型名，用于事件区分
+         *     icon: '', // bar 图标的 className
+         *     content: '', // bar 任意内容
+         *     style: '' // bar 任意样式
+         *   },
+         *   // …
+         * ]
+         * ```
+         * @since 2.8.0
+         */
+        bars?: {type: string, icon: string, content: string, style: string}[];
+        /**
+         * 是否显示默认的固定条 ，如 top
+         * @default true
+         * @since 2.8.0
+         */
+        default?: boolean;
+        /**
+         * 插入固定条的目标元素选择器
+         * @default body
+         * @since 2.8.0
+         */
+        target?: JQuery;
+        /**
+         * 固定条最外层容器滚动条所在的元素，若不设置则默认取 `target` 属性值
+         * @default body
+         * @since 2.8.0
+         */
+        scroll?: JQuery;
+        /**
+         * 设置默认 TOP 条出现滚动条的高度临界值
+         * @default 200
+         * @since 2.8.0
+         */
+        margin?: number;
+        /**
+         * 设置默认 TOP 条等动画时长
+         * @default 200
+         * @since 2.8.0
+         */
+        duration?: number;
+        /**
+         * 用于定义固定条列表的任意事件，触发事件时的回调将返回 bars 属性的 type 值
+         * @since 2.8.0
+         */
+        on?: {[index:string]:(type?: string)=>void};
         /**
          * 自定义区块背景色
          */
         bgcolor?: string;
         /**
          * 用于控制出现TOP按钮的滚动条高度临界值。默认：200
+         * @deprecated 2.8.0 已废弃, 请使用 {@link UtilBarOption.margin|margin}
+         * @see {@link UtilBarOption.margin|margin}
          */
         showHeight?: number;
         /**
@@ -3600,6 +4547,32 @@ declare namespace Layui {
          * @param [type]  bar1、bar2、top
          */
         click?(type: string | 'bar1' | 'bar2' | 'top'): void;
+    }
+
+    /**
+     * @since 2.8.0
+     */
+    interface UtilOpenWinOptions{
+      /**
+       * 要打开页面 URL
+       */
+      url: string;
+      /**
+       * 打开页面的方式或窗口 name
+       */
+      target: string | '_blank' | '_parent' | '_self' | '_top';
+      /**
+       * 打开的页面内容。若设置了 url 属性，则该属性无效
+       */
+      content: string;
+      /**
+       * 窗口的相关配置，同 window.open() 的 specs
+       */
+      specs: string;
+      /**
+       * 当前所在的窗口对象，默认 self
+       */
+      window: Window;
     }
 
     // https://www.layui.com/doc/modules/util.html
@@ -3667,6 +4640,11 @@ declare namespace Layui {
          * @param [obj]  事件回调链
          */
         event(attr: string, obj: { [index: string]: (othis: JQuery) => any }): any;
+        /**
+         * 打开浏览器新标签页
+         * @param options 属性配置项
+         */
+        openWin(options: UtilOpenWinOptions): void;
     }
 
     /**
@@ -3737,6 +4715,7 @@ declare namespace Layui {
             rate: boolean;
             slider: boolean;
             table: boolean;
+            treeTable: boolean;
             transfer: boolean;
             tree: boolean;
             upload: boolean;
@@ -3773,6 +4752,7 @@ declare namespace Layui {
         rate: Rate;
         slider: Slider;
         table: Table;
+        treeTable: TreeTable;
         transfer: Transfer;
         tree: Tree;
         upload: Upload;

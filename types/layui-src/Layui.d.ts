@@ -18,6 +18,7 @@ interface Layui {
     rate: Layui.Rate;
     slider: Layui.Slider;
     table: Layui.Table;
+    treeTable: Layui.TreeTable;
     transfer: Layui.Transfer;
     tree: Layui.Tree;
     upload: Layui.Upload;
