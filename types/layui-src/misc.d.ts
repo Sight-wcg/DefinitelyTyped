@@ -1102,7 +1102,7 @@ declare namespace Layui {
     interface Lay {
         /**
          * 查找 DOM 作为返回实例的操作对象
-         * @param [selector] 选择器 原始dom或者选择器串
+         * @param [selector] 选择器 原始dom或者选择器字符串
          */
         (selector?: string | HTMLElement): LAY;
 
@@ -1164,12 +1164,28 @@ declare namespace Layui {
         hasScrollbar(): boolean;
 
         /**
-         * 将视图元素定位到指定目标元素附近
-         * @param elem 目标元素
-         * @param elemView 视图元素
-         * @param [obj] 
+         * 创建 style 标签并插入到指定的目标容器中
+         * @param options target: 目标容器，原始 dom 或选择器字符串，默认 `body`；id: 样式的id，默认自增；text: 样式内容
          */
-        position(elem: HTMLElement, elemView: HTMLElement, obj?: {position?: 'fixed', clickType?: 'right', align?: 'center' | 'right', SYSTEM_RELOAD?: boolean}): void;
+        style(options: {target?: string | HTMLElement, id?: string, text: string}): void;
+
+        /**
+         * 将元素定位到指定目标元素附近
+         * @param target 目标元素
+         * @param elem 定位元素
+         * @param [opts] 
+         * ```
+         * opts
+         * - position: 元素的定位模式，默认 absolute
+         * - clickType: 点击类型，默认 left；
+         * - align: 对齐方式，默认 left;
+         * - allowBottomOut: 顶部没有足够区域显示时，是否允许底部溢出;
+         * - margin: 边距；
+         * - e: 仅右键生效，一般无需设置；
+         * - SYSTEM_RELOAD: 用于出现滚动条时重新计算位置，不要主动设置 
+         * ```
+         */
+        position(target: HTMLElement, elem: HTMLElement, opts?: {position?: 'absolute' | 'fixed', clickType?: 'left' | 'right', align?: 'left' | 'center' | 'right', allowBottomOut?: boolean, margin?: number, e?: MouseEvent | {clientX: number,clientY: number}, SYSTEM_RELOAD?: boolean}): void;
 
         /**
          * 获取元素上的参数，同jquery.attr()
