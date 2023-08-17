@@ -1185,7 +1185,19 @@ declare namespace Layui {
          * - SYSTEM_RELOAD: 用于出现滚动条时重新计算位置，不要主动设置 
          * ```
          */
-        position(target: HTMLElement, elem: HTMLElement, opts?: {position?: 'absolute' | 'fixed', clickType?: 'left' | 'right', align?: 'left' | 'center' | 'right', allowBottomOut?: boolean, margin?: number, e?: MouseEvent | {clientX: number,clientY: number}, SYSTEM_RELOAD?: boolean}): void;
+        position(
+          target: HTMLElement, 
+          elem: HTMLElement, 
+          opts?: {
+            position?: 'absolute' | 'fixed', 
+            clickType?: 'left' | 'right', 
+            align?: 'left' | 'center' | 'right', 
+            allowBottomOut?: boolean, 
+            margin?: number, 
+            e?: MouseEvent | {clientX: number,clientY: number}, 
+            SYSTEM_RELOAD?: boolean
+          }
+        ): void;
 
         /**
          * 获取元素上的参数，同jquery.attr()
