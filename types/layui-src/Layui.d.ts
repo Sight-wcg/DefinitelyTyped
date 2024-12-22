@@ -433,4 +433,19 @@ interface Layui {
      * @param [option] 基础参数
      */
     code(option?: Layui.CodeOption): void;
+    /**
+     * 防抖，函数按指定毫秒延时执行
+     * @param fn 
+     * @param wait 
+     * @since 2.8.3
+     */
+    debounce(fn: Function, wait: number): Function;
+    /**
+     * 节流，限制函数在指定毫秒内不重复执行
+     * @param fn 
+     * @param wait 
+     * @since 2.8.3
+     */
+    throttle(fn: Function, wait: number): Function;
+
 }

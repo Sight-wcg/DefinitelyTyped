@@ -265,6 +265,7 @@ declare namespace Layui {
     interface CodeOption {
         /**
          * 指定元素的选择器 默认值为 `.layui-code`
+         * @default '.layui-code'
          */
         elem?: string;
         /**
@@ -281,6 +282,7 @@ declare namespace Layui {
          *   </textarea>
          * </pre>
          * ```
+         * @default false
          * @since 2.8.0
          */
         preview?: boolean | 'iframe';
@@ -331,9 +333,10 @@ declare namespace Layui {
          * tools: ['full', 'window']
          * ```
          * 亦可自定义值，值对应图标 `className` 的 `layui-icon-` 后的名称，并通过 `toolsEvent` 回调函数中处理事件
+         * 自定义扩展 2.8.17
          * @since 2.8.0
          */
-        tools?: ('full' | 'window')[];
+        tools?: ('full' | 'window' | {title: string[]; type: string; event: (obj:any) => void})[];
         /**
          * 点击工具栏的回调函数，函数返回 tools 设置的名称
          * @param [othis] 当前图标元素对象
@@ -374,7 +377,8 @@ declare namespace Layui {
          */
         height?: string;
         /**
-         * 是否转义html标签，默认false
+         * 是否转义html标签
+         * @default true
          */
         encode?: boolean;
         /**
@@ -383,6 +387,7 @@ declare namespace Layui {
         skin?: string;
         /**
          * 自定义右上角内容，可传入任意 html
+         * @deprecated 2.8.2 已删除，请使用 {@link CodeOption.tools|tools}
          */
         about?: boolean;
         /**
@@ -393,13 +398,60 @@ declare namespace Layui {
          * @since 2.8.0
          */
         done?(obj?: {container: JQuery, render():void}):void;
+        /**
+         * 开启代码复制功能图标
+         * @since 2.8.2
+         */
+        copy?: boolean;
+        /**
+         * 点击复制按钮的回调函数
+         * 
+         * @param code - 当前 code 内容
+         * @since 2.8.2
+         */
+        onCopy?(code: string): void;
+        /**
+         * 用于重新渲染 code，譬如代码高亮处理
+         * @param code 当前 code 内容
+         * @param opts 当前选项
+         * @since 2.8.17
+         */
+        codeRender?(code: string, opts: Required<CodeOption>):string;
+
+        /**
+         * 指定语法高亮器，支持 hljs,prism,shiki 等
+         * @since 2.8.17
+         */
+        highlighter?: 'hljs' | 'prism' | 'shiki';
+        /**
+         * 指定语言类型
+         * @since 2.8.17
+         */
+        lang?: string;
+        /**
+         * 是否在代码域右上角显示语言类型
+         * @default false
+         * @since 2.8.17
+         */
+        langMarker?: boolean;
+        /**
+         * 设置文字是否自动换行
+         * @default true
+         * @since 2.8.17
+         */
+        wordWrap?: boolean;
+        /**
+         * 设置原始 code 值，默认取目标元素中的内容
+         * @since 2.8.18
+         */
+        code?: string;
     }
 
     interface ColorPickerOption {
         /**
          * 指向容器选择器
          */
-        elem?: string | HTMLElement | JQuery;
+        elem: string | HTMLElement | JQuery;
         /**
          *    默认颜色，不管你是使用 hex、rgb 还是 rgba 的格式输入，最终会以指定的格式显示。
          */
@@ -444,13 +496,13 @@ declare namespace Layui {
          * @param [value] 当前颜色值
          * @since 2.8.0
          */
-        cancel(color?: string): void;
+        cancel?(color?: string): void;
         /**
          * 颜色选择面板被关闭触发的回调函数
          * @param [value] 当前颜色值
          * @since 2.8.0
          */
-        close(color?: string): void;
+        close?(color?: string): void;
     }
 
     // https://www.layui.com/doc/modules/colorpicker.html
@@ -491,7 +543,7 @@ declare namespace Layui {
          * @default false
          * @since 2.8.0
          */
-        disabled: boolean;
+        disabled?: boolean;
         /**
          * 菜单项超链接的打开方式，需 href 填写才生效。 <br/>&nbsp;
          * 一般可设为 _blank 或 _self 等 默认：_self
@@ -505,7 +557,7 @@ declare namespace Layui {
         /**
          * 子级菜单数据项。参数同父级，可无限嵌套。  默认：[]
          */
-        child?: any[];
+        child?: DropDownOptionData[];
         /**
          * 自定义当前菜单项模板，优先级高于全局设定的 templet。详见下文。
          */
@@ -566,7 +618,7 @@ declare namespace Layui {
          * @default 0
          * @since 2.8.0
          */
-        shade: number | (string | number)[];
+        shade?: number | (string | number)[];
         /**
          * 全局定义菜单的列表模板，添加任意 html 字符，模版将被 laytpl 组件所转义，<br/>&nbsp;
          *  因此可通过 {{ d.title }} 的方式得到当前菜单配置的数据。<br/>&nbsp;
@@ -594,6 +646,19 @@ declare namespace Layui {
         clickScope?: string;
 
         /**
+         * 自定义 data 数据源中常用的字段名称
+         * @since 2.8.15
+         */
+        customName?:{[T in keyof DropDownOptionData]: string};
+
+        /**
+         * 是否开启手风琴动画
+         * @default false
+         * @since 2.8.18
+         */
+        accordion?: boolean;
+
+        /**
          * 组件成功弹出后的回调，并返回两个参数
          * @param [elemPanel]  弹出的面板
          * @param [elem]  点击的面板
@@ -605,7 +670,7 @@ declare namespace Layui {
          * 
          * 若返回 false，则点击选项可不关闭面板（2.8.0）
          */
-        click?(data: any, othis: JQuery): boolean;
+        click?(data: any, othis: JQuery): void | boolean;
     }
 
     /**
@@ -677,6 +742,12 @@ declare namespace Layui {
          * 选项卡标题的lay-id属性值
          */
         id?: string;
+        /**
+         * 添加后自动切换
+         * @default false
+         * @since 2.8.6
+         */
+        change?: boolean;
     }
 
     interface TabElement {
@@ -958,6 +1029,12 @@ declare namespace Layui {
          * @param [config] 验证参数
          */
         verify(config: LayFormVerifyConfig): Form;
+        /**
+         * 设置验证规则中是否同时包含必填
+         * @since 2.8.11
+         * @deprecated 2.8.17 已移除
+         */
+        verIncludeRequired: boolean;
     }
 
     interface LAY extends Omit<any[], 'find'> {
@@ -1166,6 +1243,7 @@ declare namespace Layui {
         /**
          * 创建 style 标签并插入到指定的目标容器中
          * @param options target: 目标容器，原始 dom 或选择器字符串，默认 `body`；id: 样式的id，默认自增；text: 样式内容
+         * @since 2.8.15
          */
         style(options: {target?: string | HTMLElement, id?: string, text: string}): void;
 
@@ -1211,6 +1289,25 @@ declare namespace Layui {
          * @param [elem]  只有document或body才返回true
          */
         isTopElem(elem: any): boolean;
+
+        /**
+         * 获取 style rules
+         * @param style 样式元素
+         * @param callback 用来返回 style 元素中的每个 `style rule` 的函数，返回 true 终止遍历
+         */
+        getStyleRules(style: HTMLStyleElement, callback: (ruleItem: CSSStyleRule, index: number) => boolean): CSSRuleList;
+
+        clipboard: {
+          /**
+           * 剪贴板写入文本
+           * @param text 写入剪贴板的文本
+           * @param done 写入成功/完成回调
+           * @param error 写入失败回调
+           * 
+           * @since 2.8.17
+           */
+          writeText(text: string, done: () => void, error: (err:any) => void): void;
+        }
     }
 
     interface DateParam {
@@ -1226,7 +1323,7 @@ declare namespace Layui {
         /**
          * 绑定的元素 ，选择的值会填充该元素
          */
-        elem?: string | HTMLElement | JQuery;
+        elem: string | HTMLElement | JQuery;
         /**
          * 控件选择类型
          */
@@ -1295,6 +1392,7 @@ declare namespace Layui {
          * - 若为 `string` 类型，必须和 `format` 设置的格式对应
          * - 若为 `Date` 对象类型，则可通过操作 `new Date()` 来对选项值进行相应的返回计算
          * - 若为 `Array` 类型，则数组成员可填写开始日期和结束日期
+         * - 若为 `Function` 类型，返回值同上 2.8.16
          * @example
          * ```
          * shortcuts: [
@@ -1326,7 +1424,7 @@ declare namespace Layui {
          * ```
          * @since 2.8.0
          */
-        shortcuts: {text: string, value: string | Date | Date[]}[]
+        shortcuts?: {text: string, value: string | Date | Date[] | (() => string | Date | Date[])}[];
         /**
          * 设置起始周。 支持 0-6 的数字，0 即代表从周日开始
          * @default 0
@@ -1391,9 +1489,11 @@ declare namespace Layui {
         btns?: Array<'clear' | 'now' | 'confirm'>;
         /**
          * 是否在选中目标值时即自动确认
+         * 开启 range 时，该参数无效
+         * @default true
          * @since 2.8.0
          */
-        autoConfirm: boolean;
+        autoConfirm?: boolean;
         /**
          * 语言 内置了两种语言版本：cn（中文版）、en（国际版，即英文版） ，默认值：cn
          */
@@ -1407,6 +1507,7 @@ declare namespace Layui {
          * theme: 'grid' // 内置格子主题
          * theme: 'circle' // 内置圆圈高亮主题（2.8.0）
          * theme: ['grid', '#FF5722'] // 格子主题+自定义颜色，顺序无关，自定义颜色优先级更高（2.8.0）
+         * theme: ['#FF5722', '#FF5723'] // 定义主色和辅色 （2.8.4）
          * ```
          */
         theme?: string | 'default' | 'molv' | 'grid' | 'circle' | Array<string | 'molv' | 'grid' | 'circle'>;
@@ -1471,7 +1572,7 @@ declare namespace Layui {
          * @param [this] 组件实例
          * @since 2.7.4
          */
-        close(this: any): void;
+        close?(this: any): void;
     }
 
     /**
@@ -1924,6 +2025,12 @@ declare namespace Layui {
          * @since 2.8.0
          */
         removeFocus?: boolean;
+        /**
+         * 关闭弹层时设置为隐藏，须与 id 属性同时使用
+         * @default false
+         * @since 2.8.3
+         */
+        hideOnClose?: boolean;
     }
 
     /**
@@ -2000,7 +2107,7 @@ declare namespace Layui {
          * 输入框内容为空时的占位符
          * @since 2.8.0
          */
-        placeholder: string;
+        placeholder?: string;
     }
 
     interface LayerTabOptions extends LayerOptions {
@@ -2023,8 +2130,22 @@ declare namespace Layui {
          * 是否隐藏图片底部栏
          * @default false
          * @since 2.8.0
+         * @deprecated 2.8.16 已移除，请使用 @link{LayerPhotosOptions.footer}
+
          */
-        hideFooter: boolean;
+        hideFooter?: boolean;
+        /**
+         * 是否显示顶部工具栏
+         * @default true
+         * @since 2.8.16
+         */
+        toolbar?: boolean;
+        /**
+         * 是否隐藏底部栏
+         * @default false
+         * @since 2.8.16
+         */
+        footer?: boolean;
     }
 
     interface LayerPhotosData {
@@ -2395,6 +2516,39 @@ declare namespace Layui {
          *
          */
         hash?: string | boolean;
+
+        /**
+         * 自定义条目模板
+         * @example
+         * ```js
+         * limitTemplet: function(item) {
+         *   return item + ' / page';
+         * }
+         * ```
+         * 
+         * @since 2.8.18
+         */
+        limitTemplet?: (item: string) => string;
+
+        /**
+         * 自定义跳页区域文本
+         * @example
+         * ```js
+         * skipText: ['Go to', '', 'Confirm']
+         * ```
+         * @since 2.8.18
+         */
+        skipText?: string[];
+
+        /**
+         * 自定义总数区域文本
+         * @example
+         * ```js
+         * countText: ['Total ','']
+         * ```
+         * @since 2.9.1
+         */
+        countText?: string[];
 
         /**
          * 切换分页的回调
@@ -2800,6 +2954,27 @@ declare namespace Layui {
          *  dom选择器，例如#toolbar
          */
         toolbar?: string;
+        /**
+         * 导出时忽略该列。支持以下可选值：
+         * - true: 忽略导出
+         * - false: 强制导出，对所有列适用
+         * - null: 只对常规列导出（默认）
+         * @since 2.8.3
+         */
+        ignoreExport?: boolean | null;
+
+        /**
+         * 设置单元格展开后宽度
+         * @since 2.8.15
+         */
+        expandedWidth?: number;
+
+        /**
+         * 设置当前表头单元格展开方式，优先级高于 cellExpandedMode
+         * 默认多行展开
+         * @since 2.8.17
+         */
+        expandedMode?: 'tips'
     }
 
     /**
@@ -3031,8 +3206,9 @@ declare namespace Layui {
          *             2、如果是直接赋值的方式，res即为：{data: [], count: 99} data为当前页数据、count为数据总长度
          * @param [curr] 得到当前页码
          * @param [count] 得到数据总量
+         * @param origin - 区分重载和重新渲染数据
          */
-        done?(res: any, curr: number, count: number): void;
+        done?(res: any, curr: number, count: number, origin?: string): void;
 
         /**
          *  数据请求失败的回调，返回两个参数：错误对象、内容
@@ -3150,31 +3326,127 @@ declare namespace Layui {
          *   当默认支持的名称和服务端不一致可以通过本方式或者parseData来对应
          */
         response?: TableResponseRename;
+        /**
+         * 用于设置所有单元格默认展开方式，可选值有：
+         * - tips 悬浮展开方式
+         * - default 多行展开方式（默认）
+         * @since 2.8.17
+         */
+        cellExpandedMode?: 'tips';
+        /**
+         * 用于设置所有单元格默认展开后的宽度。当 cellExpandedMode 属性为默认值时有效。
+         * @default 60
+         * @since 2.8.17
+         */
+        cellExpandedWidth?: number;
+        /**
+         * 数据接口请求完成后执行，无论成功还是失败均会触发
+         * @param xhr 是jqXHR对象（对XHR扩展），不同jquery版本其格式不同
+         * @param ts 
+         * @since 2.8.18
+         */
+        complete?(xhr: any, ts: any): void;
+    }
+
+    /**
+     * 设置行选中时的可选属性
+     * @since 2.8.0
+     */
+    interface TableSetRowCheckedOption{
+      /**
+       * 选中方式
+       * @default 'checkbox''
+       */
+      type?: 'checkbox' | 'radio';
+      /**
+       * 选中行的下标。即数据的所在数组下标（0 开头）。可设置 `all` 表示全选
+       */
+      index: string | number | Array<string | number> | 'all';
+      /**
+       * 选中状态值。 若为 `false` 可取消选中。
+       * @default true
+       */
+      checked?: boolean;
+      /**
+       * 是否仅设置样式状态。若为 `true` 则只标注选中样式，不对数据中的 `LAY_CHECKED` 属性赋值。
+       * @default false
+       * @deprecated 2.8.7 已删除
+       */
+      selectedStyle?: boolean;
     }
 
     // ------------以下TableOn 开头interface，在调用地方使用----------
+    interface TableOnCommon{
+      /**
+       * 当前行元素的 jQUery 对象
+       */
+      tr: JQuery;
+      /**
+       * 对应的表格实例配置项
+       * @since 2.8.0
+       */
+      config: Required<TableOption>;
+      /**
+       * 当前操作的行数据
+       */
+      data: object;
+      /**
+       * 当前行缓存数据，包含特定字段
+       * @since 2.8.8
+       */
+      dataCache: object;
+      /**
+       * 当前行索引
+       */
+      index: number | string;
+      /**
+       * 删除当前行
+       */
+      del(): void;
+      /**
+       * 更新当前行
+       * @param fields 要更新的列字段对象
+       * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
+       */
+      update(fields: Record<string, any>, related?: boolean | ((field: string, index: string | number) => void)): void;
+      /**
+       * 设置行选中状态
+       */
+      setRowChecked(opts: TableSetRowCheckedOption): void;
+    }
     /**
      * 点击table中checkbox后回调参数的类型
      */
-    interface TableOnCheckbox {
-        checked: true;
-        data: object;
-        /**
-         * @since 2.8.0
-         */
-        config: TableOption;
-
-        del(): void;
-
-        tr: JQuery;
-        type: string;
-        /**
-         * 
-         * @param fields 要更新的列字段对象
-         * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
-         */
-        update(fields: object, related?: boolean): void;
+    interface TableOnCheckbox extends TableOnCommon {
+      /**
+       * 当前选中状态
+       */
+      checked: true;
+      /**
+       * 若触发的是全选，则为：all；若触发的是单选，则为：one
+       */
+      type: 'all' | 'one';
+      /**
+       * 获取当前列的配置信息
+       * @since 2.8.3
+      */
+      getCol(): TableColumnOption;
     }
+
+    /**
+     * Table 单选事件
+     */
+    interface TableOnRadio extends TableOnCommon {
+      /**
+       * 当前选中状态
+       */
+      checked: true;
+      /**
+       * 获取当前列的配置信息
+       * @since 2.8.3
+       */
+      getCol(): TableColumnOption;
+  }
 
     /**
      * 点击尾部分页栏自定义模板后回调参数的类型
@@ -3196,140 +3468,85 @@ declare namespace Layui {
     /**
      * 点击table中工具列后回调参数的类型
      */
-    interface TableOnTool {
-        data: object;
-        /**
-         * @since 2.8.0
-         */
-        config: TableOption;
-
-        del(): void;
-
-        event: string;
-        tr: JQuery;
-        /**
-         * 
-         * @param fields 要更新的列字段对象
-         * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
-         */
-        update(fields: object, related?: boolean): void;
+    interface TableOnTool extends TableOnCommon {
+      /**
+       * lay-event 属性值
+       */
+      event: string;
+      /**
+       * 获取当前列的配置信息
+       * @since 2.8.3
+       */
+      getCol(): TableColumnOption;
     }
 
     /**
      * 双击table中工具列后回调参数的类型
      * @since 2.7.0
      */
-    interface TableOnToolDouble {
-        data: object;
-        /**
-         * @since 2.8.0
-         */
-        config: TableOption;
-
-        del(): void;
-
-        event: string;
-        tr: JQuery;
-        /**
-         * 
-         * @param fields 要更新的列字段对象
-         * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
-         */
-        update(fields: object, related?: boolean): void;
+    interface TableOnToolDouble extends TableOnCommon{
+      /**
+       * lay-event 属性值
+       */
+      event: string;
+      /**
+       * 获取当前列的配置信息
+       * @since 2.8.3
+       */
+      getCol(): TableColumnOption;
     }
 
     /**
      * 点击table中行后回调参数的类型
      */
-    interface TableOnRow {
-        data: object;
-        /**
-         * @since 2.8.0
-         */
-        config: TableOption;
-
-        del(): void;
-
-        tr: JQuery;
-        /**
-         * 
-         * @param fields 要更新的列字段对象
-         * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
-         */
-        update(fields: object, related?: boolean): void;
-        /**
-         * 设置当前行选中状态
-         * @param option 设置行选中时的可选属性
-         * @since 2.8.0
-         */
-        setRowChecked(option: setRowCheckedOption): void;
+    interface TableOnRow extends TableOnCommon {
+      /**
+       * jQuery 事件对象
+       */
+      e: Event;
     }
 
     /**
      * 双击table中行后回调参数的类型
      */
-    interface TableOnRowDouble {
-        data: object;
-        /**
-         * since 2.8.0
-         */
-        config: TableOption;
-
-        del(): void;
-
-        tr: JQuery;
-        /**
-         * 
-         * @param fields 要更新的列字段对象
-         * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
-         */
-        update(fields: object, related?: boolean): void;
-        /**
-         * 设置当前行选中状态
-         * @param option 设置行选中时的可选属性
-         * @since 2.8.0
-         */
-        setRowChecked(option: setRowCheckedOption): void;
+    interface TableOnRowDouble extends TableOnCommon {
+      /**
+       * jQuery 事件对象
+       */
+      e: Event;
     }
 
     /**
      * 点击table中单元格编辑后回调参数的类型
      */
-    interface TableOnEdit {
-        data: object;
-        /**
-         * @since 2.8.0
-         */
-        config: TableOption;
-
-        del(): void;
-
-        field: string;
-        tr: JQuery;
-
-        /**
-         * 
-         * @param fields 要更新的列字段对象
-         * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
-         */
-        update(fields: object, related?: boolean): void;
-
-        value: string;
-        /**
-         * 字段修改前的旧值
-         * @since 2.8.0
-         */
-        oldValue: string;
-        /**
-         * 重新编辑
-         * @since 2.8.0
-         */
-        reedit(): void;
-        /**
-         * 获取当前列表头配置信息
-         * @since 2.8.0
-         */
-        getCol(): TableColumnOption;
+    interface TableOnEdit extends TableOnCommon {
+      /**
+       * 字段名
+       */
+      field: string;
+      /**
+       * 当前单元格元素的 jQuery 对象
+       */
+      td: JQuery;
+      /**
+       * 当前单元格的值
+       */
+      value: string;
+      /**
+       * 字段修改前的旧值
+       * @since 2.8.0
+       */
+      oldValue: string;
+      /**
+       * 重新编辑
+       * @since 2.8.0
+       */
+      reedit(): void;
+      /**
+       * 获取当前列表头配置信息
+       * @since 2.8.0
+       */
+      getCol(): TableColumnOption;
     }
 
     /**
@@ -3345,7 +3562,13 @@ declare namespace Layui {
      * @since 2.8.0
      */
     interface TableOnColResized{
+      /**
+       * 获取当前列属性配置项
+       */
       col: TableColumnOption;
+      /**
+       * 获取当前表格基础属性配置项
+       */
       config: TableOption;
     }
 
@@ -3362,54 +3585,85 @@ declare namespace Layui {
      * 行右键菜单事件，需设置属性 `defaultContextmenu:false` 才生效
      * @since 2.8.0
      */
-    interface TableOnRowContextmenu{
-        data: object;
-        index: string;
-        config: TabOption;
-
-        del(): void;
-
-        event: string;
-        tr: JQuery;
-        /**
-         * 
-         * @param fields 要更新的列字段对象
-         * @param [related] 更新其他包含自定义模板并可能存在关联的列视图(2.7.4)
-         */
-        update(fields: object, related?: boolean): void;
-        /**
-         * 设置当前行选中状态
-         * @param option 设置行选中时的可选属性
-         * @since 2.8.0
-         */
-        setRowChecked(option: setRowCheckedOption): void;
+    interface TableOnRowContextmenu extends TableOnCommon{
+      /**
+       * jQuery 事件对象
+       */
+      e: Event;
     }
 
     /**
-     * 设置行选中时的可选属性
-     * @since 2.8.0
+     * 表头自定义元素工具事件，点击表头单元格中带有 lay-event 属性的自定义元素触发
+     * @since 2.8.8
      */
-    interface setRowCheckedOption{
+    interface TableOnColTool{
       /**
-       * 选中方式
-       * @default 'checkbox''
+       * 获取当前列属性配置项
        */
-      type?: 'checkbox' | 'radio';
+      col: TableColumnOption;
       /**
-       * 选中行的下标。即数据的所在数组下标（0 开头）。可设置 `all` 表示全选
+       * 获取当前表格基础属性配置项
        */
-      index?: string | number;
+      config: TableOption;
       /**
-       * 选中状态值。 若为 `false` 可取消选中。
-       * @default true
+       * 获得自定义元素对应的 lay-event 属性值
        */
-      checked?: boolean;
-      /**
-       * 是否仅设置样式状态。若为 `true` 则只标注选中样式，不对数据中的 `LAY_CHECKED` 属性赋值。
-       * @default false
-       */
-      selectedStyle?: boolean;
+      event: string;
     }
+
+    type TableFilter = string;
+    type TableEventMap = {
+      toolbar(this: HTMLElement, obj: TableOnToolbar): void;
+      sort: (this: HTMLElement, obj: TableOnSort) => void;
+      /**
+       * 
+       * @param this 
+       * @param obj 
+       * @since 2.8.8
+       */
+      colTool(this: HTMLElement, obj: TableOnColTool): void;
+      /**
+       * 
+       * @param this 
+       * @param obj 
+       * @since 2.8.0
+       */
+      colResized (this: HTMLElement, obj: TableOnColResized): void;
+      /**
+       * 
+       * @param this 
+       * @param obj 
+       * @since 2.8.0
+       */
+      colToggled(this: HTMLElement, obj: TableOnColToggled): void;
+      row(this: HTMLTableRowElement, obj: TableOnRow): void;
+      rowDouble(this: HTMLTableRowElement, obj: TableOnRowDouble): void;
+      /**
+       * 
+       * @param this 
+       * @param obj 
+       * @since 2.8.0
+       */
+      rowContextmenu (this: HTMLTableRowElement, obj: TableOnRowContextmenu): void;
+      edit(this: HTMLTableCellElement, obj: TableOnEdit): void;
+      tool(this: HTMLElement, obj: TableOnTool): void;
+      /**
+       * 
+       * @param this 
+       * @param obj 
+       * @since 2.7.0
+       */
+      toolDouble(this: HTMLElement, obj: TableOnToolDouble): void;
+      checkbox(this: HTMLInputElement, obj: TableOnCheckbox):void
+      radio(this: HTMLInputElement, obj: TableOnRadio): void;
+      /**
+       * 
+       * @param this 
+       * @param obj 
+       * @since 2.7.0
+       */
+      pagebar(this: HTMLElement, obj: TableOnPagebar): void;
+    };
 
     // https://www.layui.com/doc/element/table.html
     // https://www.layui.com/doc/modules/table.html
@@ -3487,12 +3741,6 @@ declare namespace Layui {
 
         /**
          * 绑定事件
-         * <br/>&nbsp;注意：obj类型是变化的不能在ts指定，参考如下替代方案，
-         * <br/>&nbsp;  import TableOnCheckbox = layui.TableOnCheckbox;
-         * <br/>&nbsp;  table.on('checkbox(test)', function(obj){
-         * <br/>&nbsp;    let rows:TableOnCheckbox=obj;
-         * <br/>&nbsp;    //然后，你就可以使用明确的属性了，两种方式编译后js中均为 let rows=obj; 输出不包含类型
-         * <br/>&nbsp;  });
          * <br/>&nbsp;  类型对应： （就是 TableOn+事件类型，无需记忆）
          * <br/>&nbsp;  checkbox   -> TableOnCheckbox
          * <br/>&nbsp;  pagebar   -> TableOnPagebar（2.7.0）
@@ -3506,10 +3754,12 @@ declare namespace Layui {
          * <br/>&nbsp;  colResized       ->  TableOnColResized（2.8.0）
          * <br/>&nbsp;  colToggled       ->  TableOnColToggled（2.8.0）
          * <br/>&nbsp;  rowContextmenu       ->  TableOnRowContextmenu （2.8.0）
-         * @param [event]  mod(filter)
-         * @param [callback] obj参考上边注释
+         * @param event eventTypeString(filter)
+         * @param callback 事件回调参数
          */
-        on(event: string, callback: (this: any, obj: any) => any): void;
+        on<K extends keyof TableEventMap>(event: `${K}(${TableFilter})`, callback: TableEventMap[K]): void;
+        on<K extends keyof TableEventMap>(event: K, callback: TableEventMap[K]): void;
+        on<K extends string>(event: `${K}(${TableFilter})`, callback: AnyFn): void;
 
         /**
          * 表格重载
@@ -3533,6 +3783,12 @@ declare namespace Layui {
          * @param [option] 基础参数
          */
         render(option: TableOption): TableRendered;
+        /**
+         * 用于重新渲染数据，一般在修改 table.cache 后使用
+         * @param id - table 渲染时的 id 属性值
+         * @since 2.8.6
+         */
+        renderData(id: string): void;
 
         /**
          * 重置表格尺寸结构
@@ -3759,6 +4015,12 @@ declare namespace Layui {
        * @since 2.8.0
        */
       pid?: string;
+      /**
+       * 设置根节点的 pid 属性值
+       * @deprecated 2.8.2 已弃用，请使用 {@link TreeTableTreeOptionData.rootPid|TreeTableTreeOptionData.rootPid}
+       * @see {@link TreeTableTreeOptionData.rootPid|TreeTableTreeOptionData.rootPid}
+       */
+      rootId: string;
     }
 
     /**
@@ -3833,7 +4095,7 @@ declare namespace Layui {
          * @param isSimpleData  是否为简单数据，为 true 时返回简单数据结构的数据，否则则为带层级的数据
          * @since 2.8.0
          */
-        getData(id: string, isSimpleData: boolean):any[];
+        getData(id: string, isSimpleData?: boolean):any[];
         /**
          * 获取树表对应下标的数据
          * 
@@ -3859,7 +4121,7 @@ declare namespace Layui {
          * @param index 
          * @since 2.8.0
          */
-        removeNode(id, index);
+        removeNode(id, index):void;
         /**
          * 新增行记录
          * @param id 
@@ -4156,6 +4418,12 @@ declare namespace Layui {
         };
 
         /**
+         * 自定义节点名称
+         * @since 2.8.15
+         */
+        customName?: {[T in keyof TreeData]: string};
+
+        /**
          * 复选框被点击的回调
          * @param [obj]
          */
@@ -4255,7 +4523,7 @@ declare namespace Layui {
         /**
          * 指向容器选择器，如：elem: '#id'。也可以是DOM对象
          */
-        elem?: string | HTMLElement | JQuery;
+        elem: string | HTMLElement | JQuery;
         /**
          *  触发上传的元素
          */
@@ -4297,9 +4565,9 @@ declare namespace Layui {
          * @default null
          * @since 2.6.9
          */
-        force: string | null;
+        force?: string | null;
         /**
-         * 允许上传的文件后缀。一般结合 accept 参数类设定。默认：jpg|png|gif|bmp|jpeg    <br/>&nbsp;
+         * 允许上传的文件后缀。一般结合 accept 参数类设定。默认：jpg|png|gif|bmp|jpeg|svg|webp   <br/>&nbsp;
          */
         //  假设 accept 为 file 类型时，那么你设置 exts: 'zip|rar|7z' 即代表只允许上传压缩格式的文件。	<br/>&nbsp;
         //  如果 accept 未设定，那么限制的就是图片的文件格式
@@ -4341,6 +4609,25 @@ declare namespace Layui {
          * 请求上传的 http 类型
          */
         method?: string;
+
+        /**
+         * 选择多文件时是否统一上传，即只发送一次请求。默认：false
+         * @default false
+         * @since 2.8.8
+         */
+        unified?: boolean;
+
+        /**
+         * 自定义内部各类场景下的提示文本
+         * @since 2.8.9
+         */
+        text?: UploadText;
+
+        /**
+         * 服务端返回的数据类型
+         * @since 2.8.17
+         */
+        dataType?: string;
 
         /**
          * 选择文件后的回调函数
@@ -4448,13 +4735,40 @@ declare namespace Layui {
          * 重载该实例，支持重载全部基础参数
          * @param [options] 基础参数
          */
-        reload(options?: UploadOption): void;
+        reload(options?: Partial<UploadOption>): void;
 
         /**
          * 重新上传的方法，一般在某个事件中使用
          * @param [files] 需要上传的文件数组
          */
         upload(files?: Blob[]): void;
+    }
+
+    interface UploadText {
+      /**
+       * 数据格式错误的提示
+       */
+      'data-format-error'?: string;
+      /**
+       * 文件格式校验失败的提示
+       */
+      'check-error'?: string;
+      /**
+       * 上传失败的提示
+       */
+      'error'?: string;
+      /**
+       * 限制 number 属性的提示。若设置，需为函数写法
+       */
+      'limit-number'?: (options: UploadOptionThis, fileLength: number) => string;
+      /**
+       * 限制 size 属性的提示。若设置，需为函数写法
+       */
+      'limit-size'?: (options: UploadOptionThis, limitSize: number) => string;
+      /**
+       *  IE 下跨域的提示
+       */
+      'cross-domain'?: string;
     }
 
     // https://www.layui.com/doc/modules/upload.html
@@ -4603,6 +4917,44 @@ declare namespace Layui {
       window: Window;
     }
 
+    interface UtilCountdownOptions{
+      /**
+       * 目标时间值。值可以为毫秒数或 Date 对象
+       */
+      data: number | Date;
+      /**
+       * 当前时间值，一般为当前服务器时间。值可以为毫秒数或 Date 对象
+       */
+      now: number | Date;
+      /**
+       * 倒计时初始时的回调函数。
+       */
+      ready: () => void;
+      /**
+       * 倒计时计时中的回调函数，每秒触发一次，直到计时完成。
+       */
+      clock: (timeObj: {d: number; h: number; m: number; s: number}, countdown: UtilCountdownReturn) => void;
+      /**
+       * 倒计时计时完成的回调函数，即到达目标时间值时触发
+       */
+      done: (timeObj:{d: number; h: number; m: number; s: number}, countdown: UtilCountdownReturn) => void;
+    }
+
+    interface UtilCountdownReturn{
+      /**
+       * 清除当前倒计时
+       */
+      clear: Fn;
+      /**
+       * 重载当前倒计时
+       */
+      reload: (options: UtilCountdownOptions) => void;
+      /**
+       * 当前倒计时计时器 ID
+       */
+      timer: number;
+    }
+
     // https://www.layui.com/doc/modules/util.html
     /**
      * 工具集
@@ -4622,12 +4974,21 @@ declare namespace Layui {
          *      date（包含天/时/分/秒的对象）、    <br/>&nbsp;
          *      serverTime（当前服务器时间戳或Date对象）,    <br/>&nbsp;
          *      timer（计时器返回的ID值，用于clearTimeout）
+         * 
+         * @deprecated 2.8.8 此签名已弃用
          */
         countdown(
             endTime?: number | Date,
             serverTime?: number | Date,
             callback?: (date: number[], serverTime_: typeof serverTime, timer: number) => void,
         ): void;
+
+        /**
+         * 倒计时
+         * @param options 
+         * @since 2.8.8
+         */
+        countdown(options: UtilCountdownOptions): UtilCountdownReturn;
 
         /**
          * 某个时间在当前时间的多久前
@@ -4641,7 +5002,7 @@ declare namespace Layui {
          * @param [time]  日期对象，也可以是毫秒数 ,默认:当前
          * @param [format] 默认：yyyy-MM-dd HH:mm:ss
          */
-        toDateString(time?: number | Date, format?: string): any;
+        toDateString(time?: number | Date, format?: string, option?: {customMeridiem: (hours: number, minutes: number) => string}): string;
 
         /**
          * 数字前置补零
@@ -4795,3 +5156,15 @@ declare namespace Layui {
 declare const LAYUI_GLOBAL: {dir: string};
 
 declare const layui: Layui;
+
+/**
+ * Void function
+ */
+type Fn = () => void;
+
+/**
+ * Any function
+ */
+type AnyFn = (...args: any[]) => any;
+type Awaitable<T> = Promise<T> | T;
+type ArgumentsType<T> = T extends (...args: infer U) => any ? U : never;
