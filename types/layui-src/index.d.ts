@@ -1,4 +1,4 @@
-// Type definitions for layui-src 2.8.18 table 2.8.0 treeTable 2.8.0
+// Type definitions for layui-src 2.8.10 table 2.8.18 treeTable 2.8.18
 // Project: https://github.com/sentsin/layui/releases/tag/v2.6.8
 // Definitions by: javabitar <https://github.com/javabitar>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped

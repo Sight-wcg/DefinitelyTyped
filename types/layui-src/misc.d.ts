@@ -601,8 +601,9 @@ declare namespace Layui {
         isSpreadItem?: boolean;
         /**
          * 延迟关闭的毫秒数。当 trigger 为 hover 时才生效 默认：300
+         * 自 2.9.2 支持数组类型
          */
-        delay?: number;
+        delay?: number | Array<number>;
         /**
          * 自定义组件的样式类名
          */
@@ -671,6 +672,12 @@ declare namespace Layui {
          * 若返回 false，则点击选项可不关闭面板（2.8.0）
          */
         click?(data: any, othis: JQuery): void | boolean;
+        /**
+         * 面板关闭后的回调函数
+         * @param elem 当前组件绑定的目标元素对象
+         * @since 2.9.7
+         */
+        close?(elem: JQuery): void;
     }
 
     /**
@@ -686,6 +693,18 @@ declare namespace Layui {
         config: DropDownOptionForRead;
 
         reload(options?: DropDownOptionForReload | object): void;
+
+        /**
+         * 打开面板
+         * @since 2.9.8
+         */
+        open():void;
+
+        /**
+         * 关闭面板
+         * @since 2.8.0
+         */
+        close(): void;
     }
 
     interface DropDown {
@@ -727,6 +746,12 @@ declare namespace Layui {
          * @since 2.8.0
          */
         close(id: string): DropDownModule;
+        /**
+         * 打开面板
+         * @param id 组件渲染时定义的 id 属性值
+         * @since 2.9.8
+         */
+        open(id: string): DropDownModule;
     }
 
     interface TabOption {
@@ -859,6 +884,12 @@ declare namespace Layui {
          * 与底部的临界距离，默认50。即当滚动条与底部产生该距离时，触发加载。注意：只有在isAuto为true时有效。
          */
         mb?: number;
+        /**
+         * 指定触发加载的方向
+         * @default 'bottom'
+         * @since 2.9.7
+         */
+        direction?: 'bottom' | 'top';
         /**
          * 到达临界点触发加载的回调。信息流最重要的一个存在。携带两个参数：page, next
          */
@@ -1176,6 +1207,33 @@ declare namespace Layui {
         width(): number;
     }
 
+    interface LayTouchSwipeState{
+      /**
+       * 初始坐标
+       */
+      pointerStart: {x: number,y: number};
+      /**
+       * 结束坐标
+       */
+      pointerEnd: {x: number,y: number};
+      /**
+       * X 轴移动距离
+       */
+      distanceX: number;
+      /**
+       * Y 轴移动距离
+       */
+      distanceY: number;
+      /**
+       * 滑动方向
+       */
+      direction: 'none'|'right'|'left'|'up'|'down';
+      /**
+       * 开始时间 
+       */
+      timeStart: Date;
+    }
+
     interface Lay {
         /**
          * 查找 DOM 作为返回实例的操作对象
@@ -1307,7 +1365,32 @@ declare namespace Layui {
            * @since 2.8.17
            */
           writeText(text: string, done: () => void, error: (err:any) => void): void;
-        }
+        };
+        /**
+         * 检测是否支持 Passive Event Listeners
+         * @since 2.9.2
+         * @see https://github.com/WICG/EventListenerOptions/blob/gh-pages/explainer.md
+         */
+        passiveSupported: boolean;
+        /**
+         * 是否支持 touch events
+         * @since 2.9.2
+         */
+        touchEventsSupported(): boolean;
+        /**
+         * 基于 touch 事件的触摸滑动
+         * @param elem 
+         * @param options 
+         * @since 2.9.2
+         */
+        touchSwipe(
+          elem: string | HTMLElement | JQuery, 
+          options: {
+            onTouchStart(e: TouchEvent, state: LayTouchSwipeState): void;
+            onTouchMove(e: TouchEvent, state: LayTouchSwipeState): void;
+            onTouchEnd(e: TouchEvent, state: LayTouchSwipeState):void;
+          }
+        ): void
     }
 
     interface DateParam {
@@ -1373,8 +1456,9 @@ declare namespace Layui {
          * ]
          * ```
          * @since 2.7.3
+         * @since 2.9.9 支持函数类型
          */
-        holidays?: string[][];
+        holidays?: string[][] | ((ymd: {year:number; month: number; date: number}, render: (val: string | string[][]) => void) => void);
         /**
          * 初始值  ""|new Date()|20180115
          */
@@ -1517,11 +1601,43 @@ declare namespace Layui {
         calendar?: boolean;
         /**
          * 标注重要日子  实例:{'0-0-31':'月末'} 比如2月bug
+         * @since 2.9.9 支持函数类型
          */
-        mark?: { [key: string]: string };
+        mark?: { [key: string]: string } | ((ymd: {year:number; month: number; date: number}, render: ((val: object) => void) | string) => void);
 
         eventElem?: string | HTMLElement | JQuery;
 
+        /**
+         * 仅用于格式化日期显示的格式，不影响日期值
+         * @param value 日期字符串
+         * @since 2.9.9
+         */
+        formatToDisplay?(value: string): string;
+        /**
+         * 设置不可选取的日期
+         * @param date 当前的日期对象
+         * @param type 面板类型，'start'|'end'
+         * @return 返回值为 true 的日期会被禁用
+         * @since 2.9.8
+         */
+        disabledDate?(date: Date, type?: 'start' | 'end'): boolean;
+        /**
+         * 设置不可选取的时间
+         * @param date 当前的日期对象
+         * @param type 面板类型，'start'|'end'
+         * @return  数组中指定的时间会被禁用
+         * @since 2.9.8
+         */
+        disabledTime?(date: Date, type?: 'start' | 'end'): { hours?(): number[]; minutes?(hour?: number): number[]; seconds?(hour?: number, minute?: number): number[]};
+
+        /**
+         * 自定义单元格内容
+         * @param ymd 当前单元格日期对象
+         * @param render 渲染函数
+         * @param info 上下文信息，type 表示面板模式
+         * @since 2.9.9
+         */
+        cellRender?(ymd: {year:number; month: number; date: number}, render: (val: string | HTMLElement | JQuery) => void, info: {type: 'year' | 'month' | 'date'}): void;
         /**
          * 控件初始打开的回调
          * @param [date] 基础参数
@@ -2352,9 +2468,10 @@ declare namespace Layui {
         /**
          * 关闭最近一次打开的层 
          * @param type 弹层的类型
+         * @param callback 关闭后执行的回调(2.9.0)
          * @since 2.8.0
          */
-        closeLast(type?: 'dialog' | 'page' | 'iframe' | 'loading' | 'tips'): void;
+        closeLast(type?: 'dialog' | 'page' | 'iframe' | 'loading' | 'tips', callback?: AnyFn): void;
 
         /**
          * 重新定义层的样式
@@ -2770,6 +2887,12 @@ declare namespace Layui {
          * 主题颜色，以便用在不同的主题风格下 默认：#009688
          */
         theme?: string;
+
+        /**
+         * 是否始终显示提示文本
+         * @since 2.9.6
+         */
+        tipsAlways?: boolean;
 
         /**
          * 自定义提示文本
@@ -3246,8 +3369,13 @@ declare namespace Layui {
         /**
          * 是否显示加载条（默认 true）。若为 false，则在切换分页时，不会出现加载条。    <br/>&nbsp;
          * 该参数只适用于 url 参数开启的方式
+         * - 若值为 `string` 类型 <sup>2.9.10+</sup>，表示自定义加载模板，此时可添加任意动画元素
+         * @example
+         * ```
+         * loading: '<i class="layui-icon layui-icon-loading-1 layui-anim layui-anim-rotate layui-anim-loop"></i>'
+         * ```
          */
-        loading?: boolean;
+        loading?: boolean | string;
         /**
          * 定义 table 的大标题（在文件导出等地方会用到）
          */
@@ -3822,6 +3950,13 @@ declare namespace Layui {
          * @since 2.8.0
          */
         hideCol(id: string, cols: boolean | {field: TableColumnOption['field'], hide: boolean} | Array<{field: TableColumnOption['field'], hide: boolean}>): void;
+        /**
+         * 更新指定行数据
+         * @param id table 渲染时的 `id` 属性值
+         * @param opts 更新指定行时的可选属性
+         * @since 2.9.6
+         */
+        updateRow(id: string, opts: {index: number; data: object | Array<object>}, related?: (field: string, index: number) => boolean): void;
     }
 
     /**
@@ -4339,6 +4474,13 @@ declare namespace Layui {
          * @param [index] 索引
          */
         onchange?(data: any, index: number): void;
+        /**
+         * 双击时的回调函数
+         * 返回 false 会阻止穿梭
+         * @param obj {elem, data, index} 当前穿梭框对象、数据项、索引,如果数据来自左边，index 为 0，否则为 1
+         * @since 2.9.3
+         */
+        dblclick?(obj: {elem: JQuery; data: object; index: number}): boolean | void;
     }
 
     interface TransferRendered {
@@ -4643,8 +4785,10 @@ declare namespace Layui {
         url?: string;
         /**
          * 请求上传接口的额外参数,支持属性为function动态值
+         * 函数参数(2.9.3): index 当前文件索引；file 当前文件对象
+
          */
-        data?: object;
+        data?: {[index: string]: ((index?: number, file?: File) => string | number) | string | number};
         /**
          * 接口的请求头。如：headers: {token: 'sasasas'}
          */
@@ -4832,6 +4976,11 @@ declare namespace Layui {
          * @param [filename] 新的名字
          */
         resetFile(index: string, file: Blob, filename: any): void;
+        /**
+         * 获取本次选取的文件，大文件建议用此方法获取文件信息
+         * @since 2.9.9
+         */
+        getChooseFiles(): File[];
     }
 
     interface UploadRendered {
@@ -5136,6 +5285,8 @@ declare namespace Layui {
          *  批量处理事件
          * @param [attr]  绑定需要监听事件的元素属性
          * @param [obj]  事件回调链
+         * @deprecated 2.9.0 已弃用,请使用 {@link Util.event|util.on} 代替
+         * @see {@link Util.event|util.on}
          */
         event(attr: string, obj: { [index: string]: (othis: JQuery) => any }): any;
         /**
@@ -5143,6 +5294,18 @@ declare namespace Layui {
          * @param options 属性配置项
          */
         openWin(options: UtilOpenWinOptions): void;
+        /**
+         * 
+         * @param [attr="lay-on"] 触发事件的元素属性名
+         * @param events 事件集合
+         * @param [options]  参数的更多选项
+         * @param [options.elem="body"] 触发事件的委托元素
+         * @param [options.trigger="click"] 事件触发的方式
+         * @returns 返回当前 events 参数设置的事件集合
+         * @since 2.9.0
+         */
+        on(attr: string, events: { [index: string]: (othis: JQuery) => any }, options?: {trigger: string; elem: string | HTMLElement | JQuery}): object;
+        on(events: { [index: string]: (othis: JQuery) => any }, options?: {trigger: string; elem: string | HTMLElement | JQuery}): object;
     }
 
     /**
