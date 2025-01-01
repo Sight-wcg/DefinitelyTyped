@@ -3366,7 +3366,9 @@ declare namespace Layui {
          * print: 显示打印图标
          */
         defaultToolbar?: Array<
-            'filter' | 'exports' | 'print' | string | { title?: string; layEvent?: string; icon?: string }
+            'filter' | 'exports' | 'print' | string | 
+            { title?: string; layEvent?: string; icon?: string } |
+            { name?: string; layEvent?: string; icon?: string; onClick?: (obj?: object) => void }
         >;
         /**
          * 设定容器宽度(超出容器会自动出现横向滚动条),默认宽度是跟随它的父元素铺满
@@ -3377,8 +3379,9 @@ declare namespace Layui {
          * - `height: 315` 设置固定高度
          * - `height: 'full-30'` 设置自适应高度。这是一个特定的语法格式：full 表示铺满；后面的数字表示当前 table 之外的元素占用的高度，如：表格头部到页面最顶部加表格底部距离页面最底部的“距离和”
          * - `height: '#id-30'` 设置相对父元素的高度自适应，其中 #id 即父元素的 ID 选择器，其计算原理和上述 full 相同（2.8.0）
+         * - `height: () => $(window).height() - otherHeight` 设置动态高度（2.9.1）
          */
-        height?: number | string;
+        height?: number | string | (() => number);
         /**
          * 设置表格容器的最大高度，设置该属性后，height 属性将被认定为默认的自适应值
          * @since 2.8.0
@@ -3455,7 +3458,7 @@ declare namespace Layui {
         /**
          * 是否显示加载条（默认 true）。若为 false，则在切换分页时，不会出现加载条。    <br/>&nbsp;
          * 该参数只适用于 url 参数开启的方式
-         * - 若值为 `string` 类型 <sup>2.9.10+</sup>，表示自定义加载模板，此时可添加任意动画元素
+         * - 若值为 `string` 类型 2.9.10+，表示自定义加载模板，此时可添加任意动画元素
          * @example
          * ```
          * loading: '<i class="layui-icon layui-icon-loading-1 layui-anim layui-anim-rotate layui-anim-loop"></i>'
@@ -3574,6 +3577,7 @@ declare namespace Layui {
       type?: 'checkbox' | 'radio';
       /**
        * 选中行的下标。即数据的所在数组下标（0 开头）。可设置 `all` 表示全选
+       * 数组类型 2.9.1+
        */
       index: string | number | Array<string | number> | 'all';
       /**
