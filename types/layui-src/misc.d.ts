@@ -411,7 +411,7 @@ declare namespace Layui {
          * @param cpoied - 是否复制成功 2.9.21+
          * @since 2.8.2
          */
-        onCopy?(code: string, cpoied: boolean): undefined | boolean;
+        onCopy?(code: string, cpoied: boolean): void | boolean;
         /**
          * 用于重新渲染 code，譬如代码高亮处理
          * @param code 当前 code 内容
@@ -876,7 +876,7 @@ declare namespace Layui {
          * @param [layid] 选项卡标题列表的 属性 lay-id 的值
          * @param [force] 是否强制删除，默认为false。如果为true，则会直接删除，不会触发事件 2.9.21
          */
-        tabDelete(filter: string, layid: string, force: boolean): void;
+        tabDelete(filter: string, layid: string, force?: boolean): void;
 
         /**
          * 用于外部切换到指定的Tab项上
@@ -884,7 +884,7 @@ declare namespace Layui {
          * @param [layid] 比如：lay-id="yyy"中的'yyy'
          * @param [force] 是否强制切换，默认为false。如果为true，则会直接切换，不会触发事件 2.9.15
          */
-        tabChange(filter: string, layid: string, force: boolean): void;
+        tabChange(filter: string, layid: string, force?: boolean): void;
 
         /**
          * 用于绑定自定义 Tab 元素（即非 layui 自带的 tab 结构）
