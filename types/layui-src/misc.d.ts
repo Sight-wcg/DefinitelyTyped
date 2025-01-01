@@ -7,7 +7,7 @@ declare namespace Layui {
      * @param [index] 当前层索引参数
      * @param [layero] 当前层的jqDOM
      */
-    type LayerCallbackYes = (index: number, layero: JQuery) => boolean | void;
+    type LayerCallbackYes = (index: number, layero: JQuery) => boolean | Promise<boolean> | JQueryDeferred<boolean> | void;
     /**
      * 层关闭的回调,如果不想关闭，return false即可
      * @param [index] 当前层索引参数
@@ -405,11 +405,13 @@ declare namespace Layui {
         copy?: boolean;
         /**
          * 点击复制按钮的回调函数
+         * 返回 false 阻止内置提示(2.9.21+)
          * 
          * @param code - 当前 code 内容
+         * @param cpoied - 是否复制成功 2.9.21+
          * @since 2.8.2
          */
-        onCopy?(code: string): void;
+        onCopy?(code: string, cpoied: boolean): undefined | boolean;
         /**
          * 用于重新渲染 code，譬如代码高亮处理
          * @param code 当前 code 内容
@@ -660,6 +662,13 @@ declare namespace Layui {
         accordion?: boolean;
 
         /**
+         * 点击触发元素时是否关闭面板
+         * @default true
+         * @since 2.9.18
+         */
+        closeOnClick?: boolean;
+
+        /**
          * 组件成功弹出后的回调，并返回两个参数
          * @param [elemPanel]  弹出的面板
          * @param [elem]  点击的面板
@@ -670,14 +679,21 @@ declare namespace Layui {
          * 菜单项被点击时的回调，并返回两个参数
          * 
          * 若返回 false，则点击选项可不关闭面板（2.8.0）
+         * e 事件对象 2.9.18+
          */
-        click?(data: any, othis: JQuery): void | boolean;
+        click?(data: any, othis: JQuery, e: Event): void | boolean;
         /**
          * 面板关闭后的回调函数
          * @param elem 当前组件绑定的目标元素对象
          * @since 2.9.7
          */
         close?(elem: JQuery): void;
+        /**
+         * 点击 dropdown 外部时的回调函数，返回 `false` 可阻止关闭
+         * @param e 事件对象
+         * @since 2.9.18
+         */
+        onClickOutside?(e: Event): boolean | void;
     }
 
     /**
@@ -773,6 +789,12 @@ declare namespace Layui {
          * @since 2.8.6
          */
         change?: boolean;
+        /**
+         * 是否开启删除图标
+         * @default false
+         * @since 2.9.11
+         */
+        allowClose?: boolean;
     }
 
     interface TabElement {
@@ -787,6 +809,43 @@ declare namespace Layui {
     }
 
     // https://www.layui.com/doc/modules/element.html
+    type ElementEventParam = {
+      /**
+       * 当前 tab 项的所在下标
+       */
+      index: number;
+      /**
+       * 当前的 tab 容器
+       */
+      elem: JQuery;
+      /**
+       * 前的 tab ID
+       * @sinc 2.9.11
+       */
+      id: string;
+    }
+    type ElementEventMap = {
+      /**
+       * tab 切换事件
+       */
+      tab(this: HTMLElement, data: ElementEventParam): void;
+      /**
+       * tab 切换前的事件
+       * 返回 false 阻止切换
+       * @since 2.9.16
+       */
+      tabBeforeChange(this: HTMLElement, data: ElementEventParam & {to: {index: number, id: string}}): undefined | boolean;
+      /**
+       * tab 删除事件
+       */
+      tabDelete(this: HTMLElement, data: ElementEventParam): void;
+      /**
+       * tab 删除前的事件
+       * 返回 false 取消关闭操作
+       * @since 2.9.11+
+       */
+      tabBeforeDelete(this: HTMLElement, data: ElementEventParam): undefined | boolean;
+    }
     /**
      * 元素操作
      */
@@ -800,7 +859,9 @@ declare namespace Layui {
          * @param [filter] 比如：tab(filter)，tabDelete(filter)，nav(filter)，collapse(filter)
          * @param [callback]  不同filter对应的data类型不同
          */
-        on(filter: string, callback: (this: any, data: any) => any): any;
+        on<K extends keyof ElementEventMap>(event: `${K}(${TableFilter})`, callback: ElementEventMap[K]): void;
+        on<K extends keyof ElementEventMap>(event: K, callback: ElementEventMap[K]): void;
+        on<K extends string>(event: `${K}(${TableFilter})`, callback: AnyFn): void;
 
         /**
          * 用于新增一个Tab选项
@@ -813,15 +874,17 @@ declare namespace Layui {
          * 用于删除指定的Tab选项
          * @param [filter] tab元素的 lay-filter="value" 过滤器的值（value）
          * @param [layid] 选项卡标题列表的 属性 lay-id 的值
+         * @param [force] 是否强制删除，默认为false。如果为true，则会直接删除，不会触发事件 2.9.21
          */
-        tabDelete(filter: string, layid: string): void;
+        tabDelete(filter: string, layid: string, force: boolean): void;
 
         /**
          * 用于外部切换到指定的Tab项上
          * @param [filter] 比如：element.tabChange('demo', 'layid');中的'demo'
          * @param [layid] 比如：lay-id="yyy"中的'yyy'
+         * @param [force] 是否强制切换，默认为false。如果为true，则会直接切换，不会触发事件 2.9.15
          */
-        tabChange(filter: string, layid: string): void;
+        tabChange(filter: string, layid: string, force: boolean): void;
 
         /**
          * 用于绑定自定义 Tab 元素（即非 layui 自带的 tab 结构）
@@ -840,6 +903,8 @@ declare namespace Layui {
          *  更新渲染同render， 2.1.6 开始，可以用 element.render(type, filter); 方法替代
          * @param [type]  可选有：'tab' | 'nav' | 'breadcrumb' | 'progress' | 'collapse'
          * @param [filter] lay-filter
+         * @deprecated 已弃用，请使用 {@link Element.render | render} 方法
+
          */
         init(type?: 'tab' | 'nav' | 'breadcrumb' | 'progress' | 'collapse', filter?: string): void;
 
@@ -851,9 +916,9 @@ declare namespace Layui {
          *  3、breadcrumb    重新对面包屑进行渲染  <br/>&nbsp;
          *  4、progress    重新对进度条进行渲染  <br/>&nbsp;
          *  5、collapse    重新对折叠面板进行渲染 <br/>&nbsp;
-         * @param [filter] 为元素的 lay-filter="" 的值，用于局部更新
+         * @param [filter] 为元素的 lay-filter="" 的值，用于局部更新，2.9.16+ 支持 jQuery 对象
          */
-        render(type?: 'tab' | 'nav' | 'breadcrumb' | 'progress' | 'collapse', filter?: string): void;
+        render(type?: 'tab' | 'nav' | 'breadcrumb' | 'progress' | 'collapse', filter?: string | JQuery): void;
     }
 
     interface FlowOption {
@@ -890,6 +955,11 @@ declare namespace Layui {
          * @since 2.9.7
          */
         direction?: 'bottom' | 'top';
+        /**
+         * 自定义"加载更多"按钮文本
+         * @since 2.9.11
+         */
+        moreText?: string;
         /**
          * 到达临界点触发加载的回调。信息流最重要的一个存在。携带两个参数：page, next
          */
@@ -2147,6 +2217,22 @@ declare namespace Layui {
          * @since 2.8.3
          */
         hideOnClose?: boolean;
+        /**
+         * 异步按钮。开启之后，除 `layer.prompt` 的按钮外，
+         * 按钮回调的返回值将支持 `boolean | Promise<boolean> | JQueryDeferred<boolean>` 类型，
+         * 返回 `false` 或 `Promise.reject` 时阻止关闭。
+         * 注意，此时 `yes` 和 `btn1`(两者等效) 回调的默认行为发生了变化，即由触发时不关闭弹层变为关闭弹层。
+         * @since 2.9.13
+         */
+        btnAsync?: boolean;
+
+        /**
+         * 弹层被关闭前的回调函数。如果返回 false 或者 Promise.reject，将会取消关闭操作
+         * @param layero 弹层元素的 jQuery 对象
+         * @param index 弹层索引
+         * @since 2.9.11
+         */
+        beforeEnd?(layero: JQuery, index: number): boolean | JQueryDeferred<boolean> | Promise<boolean>
     }
 
     /**
@@ -4890,9 +4976,10 @@ declare namespace Layui {
 
         /**
          * 文件提交上传前的回调，返回false则停止上传  实例:before:function(this,obj){}
+         * 2.9.11+ 新增支持 Promise
          * @param [obj]  回调参数(工具对象)
          */
-        before?(this: UploadOptionThis, obj: UploadCallbackArg): any;
+        before?(this: UploadOptionThis, obj: UploadCallbackArg): boolean | JQueryDeferred<boolean> | Promise<boolean>;
 
         /**
          * 上传后的回调
@@ -4907,8 +4994,10 @@ declare namespace Layui {
          * 返回两个参数，分别为：index（当前文件的索引）、upload（重新上传的方法
          * @param [index] 当前文件索引  (选择文件时自动生成的：new Date().getTime()+'-'+i)
          * @param [upload] 上传函数
+         * @param [res] 返回值（纯文本）2.9.13+
+         * @param [xhr] jQuery xhr 对象 2.9.16+
          */
-        error?(this: UploadOptionThis, index: string, upload: (files?: Blob[]) => void): void;
+        error?(this: UploadOptionThis, index: string, upload: (files?: Blob[]) => void, res: string, xhr: jQXhr): void;
 
         /**
          *  当文件全部被提交后，才触发
